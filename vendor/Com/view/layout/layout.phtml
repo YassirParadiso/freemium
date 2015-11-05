@@ -301,7 +301,12 @@ Si el parámetro existe devolver su valor
     var company = jQuery('#contact_us_company').val();
     var msg = jQuery('#contact_us_msg').val();
     var send_email = "camilo@paradisosolutions.com";
-    var url = "<?php echo $this->url($this->route_name) ?>";
+
+    <?php if($this->route_name) : ?>
+      var url = "<?php echo $this->url($this->route_name) ?>";
+    <?php else : ?>
+      var url = "";
+    <?php endif; ?>
     expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 
     //console.log(name);
