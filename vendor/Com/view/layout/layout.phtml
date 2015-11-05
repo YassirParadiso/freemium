@@ -71,7 +71,11 @@
         
         <h4><?php echo $this->translate('form_h4'); ?></h4>
         
-        <form method="post" action="<?php echo $this->url($this->route_name); ?>" id="blockcontactfreemium" name="blockcontactfreemium">
+        <?php if($this->route_name) ?>
+          <form method="post" action="<?php echo $this->url($this->route_name); ?>" id="blockcontactfreemium" name="blockcontactfreemium">
+        <?php else : ?>
+          <form method="post" action="" id="blockcontactfreemium" name="blockcontactfreemium">
+        <?php endif; ?>
           
           <input type="hidden" name="contact_form" value="blockcontactfreemium">
     
