@@ -1,0 +1,12 @@
+<?php
+
+$vars = $this->vars();
+
+foreach($vars as $value)
+{
+
+    if(is_string($value) || is_numeric($value))
+    {
+        echo $value;
+    }
+}

@@ -1,0 +1,17 @@
+<?php
+$data = $this->collector->getData();
+$count = count($data);
+?>
+<?php if($count) : ?>
+    <div class="zdt-toolbar-entry">
+        <div class="zdt-toolbar-preview">
+            <img src="data:image/png;base64,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" alt="Debug">
+            <span class="zdt-toolbar-info">Debug (<?php echo $count?>)</span>
+        </div>
+        <div class="zdt-toolbar-detail">
+            <span class="zdt-toolbar-info">
+                <span class="zdt-detail-pre"><pre><?php print_r($data); ?></pre></span>
+            </span>
+        </div>
+    </div>
+<?php endif; ?>

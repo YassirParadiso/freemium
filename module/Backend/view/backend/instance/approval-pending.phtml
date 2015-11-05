@@ -1,0 +1,99 @@
+<?php
+
+$this->headScript()->appendFile($this->basePath('/js/colorbox/colorbox.js'));
+$this->headLink()->appendStylesheet($this->basePath('/js/colorbox/1/colorbox.css'));
+
+?>
+<div class="col-lg-12">
+    <h1>Approval Pending</h1>
+</div>
+<div class="col-lg-12">
+    <div style="float:left">
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Bulk Actions <span class="caret"></span></button>
+            <ul class="dropdown-menu" role="menu">
+                <li><a class="action" data-action="approve" href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'approve')); ?>">Approve</a></li>
+                <li><a class="action" data-action="delete" href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'delete')); ?>">Delete</a></li>
+            </ul>
+        </div>
+    </div>
+    <span class="message label label-warning" style="display:none;float:left;margin-left:20px;margin-top:3px"></span>
+</div>
+
+<script>
+function show_message(message)
+{
+    $(".message").text(message).show();
+}
+
+function hide_message()
+{
+    $(".message").text("").hide();
+}
+
+jQuery(function() {
+    
+    $(".action").click(function(e) {
+    
+        e.preventDefault();
+        hide_message();
+        
+        var $self = $(this);
+        var action = $self.attr("data-action");
+        
+        var $checked = $(".row:checked");
+        
+        if($checked.size())
+        {
+            if("delete" == action)
+            {
+                var f = confirm("Please confirm that you want to delete the selected reserved instances.\n This action can't be undone.");
+                if(!f)
+                {
+                    return false;
+                }
+            }
+            
+            var href = $self.attr("href");
+            $('form[name="form_defaultGrid"]').attr("action", href).submit();
+        }
+        else
+        {
+            show_message("No rows selected");
+        }
+    });
+
+    $(".delete").click(function(e) {
+        var $self = $(this);
+        
+        var users = $self.attr("data-users");
+        
+        if(users > 1)
+        {
+            var f = confirm("Please confirm that you want to delete the selected reserved instance and the " + users + " related users.\n This action can't be undone.");
+        }
+        else
+        {
+            var f = confirm("Please confirm that you want to delete the selected reserved instance.\n This action can't be undone.");
+        }
+        
+        if(!f)
+        {
+            e.preventDefault();
+        }
+    });
+    
+    $(".iframe").click(function(e) {
+        var $self = $(this);
+        e.preventDefault();
+        
+        $.colorbox({
+            href: $self.attr("href")
+            ,iframe: true
+            ,width: 600
+            ,height: 250
+        });
+    });
+    
+});
+</script>

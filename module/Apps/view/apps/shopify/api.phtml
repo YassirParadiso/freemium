@@ -1,0 +1,50 @@
+<?php
+$com = $this->Communicator();
+
+$queryParams = array(
+    'hmac' => $this->hmac,
+    'shop' => $this->shop,
+    'signature' => $this->signature,
+    'timestamp' => $this->timestamp 
+);
+$query = http_build_query($queryParams, null, '&amp;');
+
+$formParams = array(
+    'controller' => 'shopify',
+    'action' => 'api' 
+);
+
+$formAction = $this->url('apps', $formParams) . "?$query";
+?>
+
+<div id="form">
+    <div id="container">
+        <form method="post" action="<?php echo $formAction ?>">
+        
+            <div id="alert"><?php $com->printMessage() ?></div>
+            
+            <div class="form-control-2 required large <?php $com->printErrorClass('instance'); ?>">
+                <label><?php echo $this->translate('Instance url')?>*</label>
+                <input type="text" name="instance" value="<?php echo $this->escapehtml($this->instance)?>" required="required" placeholder="http://instacename.paradisolms.com"/>
+                <?php $com->printFieldErrors('instance'); ?>
+            </div>
+            
+            <div class="form-control-2 required large <?php $com->printErrorClass('username'); ?>">
+                <label><?php echo $this->translate('Username')?>*</label>
+                <input type="text" name="username" value="<?php echo $this->escapehtml($this->username)?>" required="required" />
+                <?php $com->printFieldErrors('username'); ?>
+            </div>
+            
+            <div class="form-control-2 required large <?php $com->printErrorClass('password'); ?>">
+                <label><?php echo $this->translate('Password')?>*</label>
+                <input type="password" name="password" value="<?php echo $this->escapehtml($this->password)?>" required="required" />
+                <?php $com->printFieldErrors('password'); ?>
+            </div>
+             
+             <div class="form-control-2" id="submit" style="margin-top:10px">
+                <input type="submit" id="submit" value="<?php echo $this->translate('Authenticate')?>">
+             </div>
+             
+        </form>
+    </div>
+</div>

@@ -1,0 +1,17 @@
+<?php
+$data = $this->collector->getData();
+$count = count($data);
+?>
+<?php if($count) : ?>
+    <div class="zdt-toolbar-entry">
+        <div class="zdt-toolbar-preview">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAACdUlEQVR4Xu1VPWgaYRj+/D9phyhCodDSTA6CSiX4AwaX1E2wWyGddLKxgiCCGRoyuLelILjZQjehgknqqCEdXKprBGmkISD+cv6cend9X+mJV9NzMVseeLn3W57nueeej5PxPE/uEnJc7gV8Ph8VDof37kyg1+s9MpvN3+Px+MGdCGBRKIqSmUymjyDybplAuY4gGAxuKZVKxXLb/t11Ot0W7iqVioDIUSKR0CeTyQgSSNZUJpNpMpnMWKPRIJFoAKIdTCzOs9mM1Gq1L8fHx6/XRaRAV2q1WmrQCGEYhgyHQ0LTNBkMBsRgMOxHIpH0rRGFQqG9er1e+p8qy7JIMp/RaDR3LJfLUWjx5DiOb7fbzRWBWCx24HQ6P1Sr1W043jQajRtwSf0l5qAxDDidLMWII9fr9U8UCsVcYDKZcOVyOZLNZj+JBLABNpvtCBwIGTOwP0YeIgGHw/HU7/fXQQDfaFIsFl+dnZ1lRS2CL//earW+BRfoYN4MaBAdCATQoeBWtLOAdDrddblcPDqnAYVC4UWpVPohqunh4eFnqNc+rJgn5kd2d3d/TqdTJFoZIBME8Ent7OxwrVbrOp/PeyDaS1ETgfyb0Wj0Cc6wCfBxMB6BSJiVMxqJRqMPgIeB0UKk9MpNBuXf6BrR6XRIs9lEciEKIQ7JMxCzt5EjlKlU6g3U7cpisSTH47EMMBfodrsN2LnbIgJgTBgROmeJBBY32ev1vrTb7V+1Wq0aX/3k5GT74uLiikiDR6wVEOB2u50ej6dAUdTD09PTZ+fn5782+j/AeuVyuef9fv8a2sSRDWDlJlcqlUvI2QjraBMC9z/9tfgDeaJPSZXYn/MAAAAASUVORK5CYII=" alt="Session">
+            <span class="zdt-toolbar-info">Session (<?php echo $count?>)</span>
+        </div>
+        <div class="zdt-toolbar-detail">
+            <span class="zdt-toolbar-info">
+                <span class="zdt-detail-pre"><pre><?php print_r($data); ?></pre></span>
+            </span>
+        </div>
+    </div>
+<?php endif; ?>

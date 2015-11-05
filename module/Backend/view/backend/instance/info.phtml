@@ -1,0 +1,66 @@
+<?php
+$com = $this->Communicator();
+$client = $this->client;
+?>
+<?php $this->headStyle()->captureStart(); ?>
+.table{}
+.table td.td_label{font-weight:bold;width:160px;color:#000;font-size:12px}
+<?php $this->headStyle()->captureEnd(); ?>
+
+<div style="height:80px">
+
+    <?php $com->printMessage() ?>
+        
+    <table class="table">
+        <tr>
+            <td class="td_label">Total active users</td>
+            <td><span class="badge"><?php echo $this->active?></span></td>
+        </tr>
+        <tr>
+            <td class="td_label">Total inactive users</td>
+            <td><span class="badge"><?php echo $this->inactive?></span></td>
+        </tr>
+        
+        <tr>
+            <td class="td_label">Count logins</td>
+            <td>
+                <span class="badge"><?php echo $this->count_logins?></span>
+
+                <span class="label label-info">Starting on <?php echo $this->count_logins_from_date?></span>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="td_label">Last login</td>
+            <td>
+                <?php echo $this->last_login_date?><br>
+                <?php echo $this->last_login_user?>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="td_label">Instance approved on</td>
+            <td>
+                <?php if($client && $client->approved_on) : ?>
+                    <?php $time = strtotime($client->approved_on); ?>
+                    <?php echo date('F d, Y @ h:i a', $time);?>
+                <?php else : ?>
+                    - 
+                <?php endif;?>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="td_label">Instance approved by</td>
+            <td>
+                <?php if($client && $client->approved_by) : ?>
+                    <?php echo $client->approved_by ?>
+                <?php else : ?>
+                    -
+                <?php endif;?>
+            </td>
+        </tr>
+        
+    </table>
+
+</div>

@@ -1,0 +1,63 @@
+<?php
+
+// variable que almacena cualquier parametro que se quiera pasar al paginador
+$params = (!$this->params) ? array() : $this->params;
+
+// nombre de la variable que se encarga de paginar los resultados
+$handler = (!$this->handler) ? 'page' : $this->handler; 
+
+// nombre de la ruta para ensamblar la url
+$route = $this->route;
+?>
+<?php if ($this->pageCount) : ?>
+     <div>
+         <ul class="pagination">
+             <!-- Previous page link -->
+             <?php if (isset($this->previous)): ?>
+                <?php
+                $params[$handler] = $this->previous;
+
+                $params2 = $params;
+                unset($params2[$handler]);
+
+                if(1 == $this->previous)
+                {
+                    $params = $params2;
+                }
+                ?>
+                <li><a href="<?php echo $this->url($route, $params2); ?>"><<</a></li>
+                <li><a href="<?php echo $this->url($route, $params); ?>"><</a></li>
+             <?php else: ?>
+                <li class="disabled"><a href="#"><<</a></li>
+                <li class="disabled"><a href="#"><</a></li>
+             <?php endif; ?>
+
+             <!-- Numbered page links -->
+             <?php foreach ($this->pagesInRange as $page): ?>
+                 <?php if ($page != $this->current): ?>
+                    <?php $params[$handler] = $page; ?>
+
+                    <?php if(1 == $page) : ?>
+                        <?php unset($params[$handler]); ?>
+                    <?php endif; ?>
+
+                    <li><a href="<?php echo $this->url($route, $params);?>"><?php echo $page; ?></a></li>
+                 <?php else: ?>
+                     <li class="active"><a href="#"><?php echo $page; ?></a></li>
+                 <?php endif; ?>
+             <?php endforeach; ?>
+
+             <!-- Next page link -->
+             <?php if (isset($this->next)) : ?>
+                <?php $params[$handler] = $this->next; ?>
+                <li><a href="<?php echo $this->url($route, $params); ?>">></a></li>
+
+                <?php $params[$handler] = $this->last; ?>
+                <li><a href="<?php echo $this->url($route, $params); ?>">>></a></li>
+             <?php else: ?>
+                <li class="disabled"><a href="#">></a></li>
+                <li class="disabled"><a href="#">>></a></li>
+             <?php endif; ?>
+         </ul>
+     </div>
+ <?php endif; ?>

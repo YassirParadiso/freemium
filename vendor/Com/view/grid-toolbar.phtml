@@ -1,0 +1,22 @@
+<div class="row" style="margin-bottom:5px;">
+    
+    <?php echo $this->before_title ?>
+    
+    <div class="col-md-12">
+        <?php if($this->grid_title) : ?>
+            <h1><?php echo $this->grid_title ?></h1>
+        <?php endif;?>
+    </div>
+    
+    <?php echo $this->after_title ?>
+    
+    <?php echo $this->before_message ?>
+    
+    <div class="row">
+        <div class="span6 col-md-6">
+            <?php $this->Communicator()->printMessage() ?>
+        </div>
+    </div>
+    
+    <?php echo $this->after_message ?>
+</div>

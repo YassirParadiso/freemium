@@ -1,0 +1,443 @@
+<?php echo $this->doctype(); ?>
+<html>
+      <head>
+        <meta charset="UTF-8">
+         
+        <?php echo $this->headTitle($this->translate('Paradiso Solutions'))->setSeparator(' - ')->setAutoEscape(false) ?>
+
+        <?php 
+            echo $this->headMeta()
+                ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+                ->appendHttpEquiv('X-UA-Compatible', 'IE=edge');
+        ?>
+        
+        <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+
+
+
+        <!-- styles -->
+        <?php 
+        echo $this->headLink(array('rel' => 'shortcut icon'
+                ,'type' => 'image/vnd.microsoft.icon'
+                ,'href' => $this->basePath('/img/favicon.ico')
+            ))
+            ->prependStylesheet($this->basePath('/css/style.css?v=1'))
+            ->prependStylesheet($this->basePath('/css/jquery.fancybox.css'))
+            ->prependStylesheet($this->basePath('/css/bootstrap-theme.min.css'))
+            ->prependStylesheet($this->basePath('/css/bootstrap.min.css'))
+            ->appendStylesheet($this->basePath('/css/font-awesome/css/font-awesome.min.css'))
+            ;
+        ?>
+        <?php  echo $this->headStyle() ?>
+        <!-- /styles -->
+
+
+
+        <!-- scripts -->
+        <?php 
+        echo $this->headScript()
+            ->prependFile($this->basePath('/js/jquery.fancybox.pack.js'))
+            ->prependFile($this->basePath('/js/bootstrap.min.js'))
+            ->prependFile($this->basePath('/js/jquery.min.js'))
+            ->prependFile($this->basePath('/js/respond.min.js'), 'text/javascript', 
+                array('conditional' => 'lt IE 9'))
+            ->prependFile($this->basePath('/js/html5shiv.js'),   'text/javascript', 
+                array('conditional' => 'lt IE 9'));
+        ?>
+        <!-- /scripts -->
+
+        <!-- Agile CRM -->
+      <script type="text/javascript" src="https://paradiso.agilecrm.com/stats/min/agile-min.js"> 
+      </script>
+      <script type="text/javascript" >
+         _agile.set_account('1hjma4g6bthgmu56b1tdjadlht', 'paradiso');
+         _agile.track_page_view();
+         _agile_execute_web_rules();
+      </script>
+
+         
+        
+      </head>
+      <body style="background: #000;">
+        
+                              <div class="ventana">     
+
+
+    <div id="popupcontactus">
+      <div class="contactpopup contactblockpopup">
+        <a class="close">x</a>
+        <h3><?php echo $this->translate('form_title'); ?></h3>
+        <p><?php echo $this->translate('form_p'); ?></p>
+        
+        <h4><?php echo $this->translate('form_h4'); ?></h4>
+        
+        <form method="post" action="<?php echo $this->url($this->route_name); ?>" id="blockcontactfreemium" name="blockcontactfreemium">
+          
+          <input type="hidden" name="contact_form" value="blockcontactfreemium">
+    
+          <input id="contact_us_name" class="c1" type="text" name="contact_name" placeholder="<?php echo $this->translate('label_name'); ?>" value=""  onfocus="this.placeholder = ''" onblur="this.placeholder = '* Your Name:'">
+          <input id="contact_us_phone" class="c2" type="tel" name="contact_phone" placeholder="<?php echo $this->translate('label_phone'); ?>" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Your Phone'">
+          <input id="contact_us_email" type="email" name="contact_email" placeholder="<?php echo $this->translate('label_email'); ?>"  onfocus="this.placeholder = ''" onblur="this.placeholder = '* Your Email Address'">
+          <input id="contact_us_company" class="c4" type="text" name="contact_company" placeholder="<?php echo $this->translate('label_company'); ?>" value="" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Company Name:'">
+          <textarea id="contact_us_msg" placeholder="<?php echo $this->translate('label_message'); ?>" name="contact_message" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Message'"></textarea>
+          <h5><?php echo $this->translate('call_us'); ?></h5>
+          <button id="contactpopupsubmit" type="submit"><?php echo $this->translate('btn_send'); ?></button>
+        </form>
+        <div id="contactmsgsuccess">
+          <h3><?php echo $this->translate('h3_success'); ?></h3>
+          <p><?php echo $this->translate('p_success'); ?></p>
+          <span><?php echo $this->translate('span_success'); ?></span>
+        </div>
+        <div id="contactusmsgerror">
+          <?php echo $this->translate('text_error'); ?>
+        </div>
+        
+      </div>
+    </div>
+     
+      </div> 
+         <!-- /freemium -->
+         
+        <div class="container">
+        <div class="col-md-12">
+
+
+          <header>
+          
+          
+          <div id="phone-freemium">
+              <p><?php echo $this->translate('phone_freemium'); ?></p>
+                 
+          </div>
+           
+            <div id="centrar-absolute">
+                 <div id="centrar">
+                     <aside class="top-links">
+                            <div class="custom top-buttons">
+                                <ul>
+                                    <li>
+                                        <a class="contact-us" href="#" ><?php echo $this->translate('menu_contact'); ?></a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                     </aside>
+                 </div>
+             </div>
+             
+            <div id="logo">
+               <a target="_blank" href="<?php echo $this->translate('url_site'); ?>">
+               <img src="<?php echo $this->translate('logo'); ?>" alt="Paradiso LMS"></a>
+            </div>
+            <div id="right-buttonss">
+               <!--a href="<?php //echo $CFG->wwwroot?>/login/index.php"><?php echo $this->translate('Login')?></a-->
+            </div>
+
+             
+         </header>
+        
+        <div id="test" style="display:none;">
+            <h2><?php echo $this->translate('terms_title'); ?></h2>
+          <p>
+            <?php echo $this->translate('terms_conditions'); ?>
+          </p>
+          </div>
+          
+          <div id="text-top" class="despues">
+    <div class="wrapper">
+        <div id="wrapper-top">
+            <h2 class="tryfree"><strong><?php echo $this->translate('try_free_top'); ?></strong></h2>
+            <h2 class="tryfree"><?php echo $this->translate('try_free_bottom'); ?></h2>
+            
+        </div>
+    </div>
+</div>
+          
+
+
+         <?php echo $this->content; ?>
+
+   
+         </div> 
+          </div> 
+
+
+
+     
+          
+
+    
+         
+         <?php echo $this->inlineScript() ?>
+        
+<script type="text/javascript">
+$(document).ready(function() {
+
+
+  $(".fancybox").fancybox({
+    openEffect  : 'none',
+    closeEffect : 'none',
+    maxWidth  : 800,
+    maxHeight : 600,
+    fitToView : false,
+    width   : '70%',
+    height    : '70%',
+    autoSize  : false,
+    closeClick  : false,
+    closeBtn : true,
+    preload   : true,
+    openEffect  : 'fade',
+    openSpeed : 'fast',
+    closeEffect : 'none',
+    helpers : {
+        overlay : {
+            css : {
+                'background' : 'rgba(0, 0, 0, 0.7)'
+            }
+        }
+    }
+});
+
+
+
+});
+</script>
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-61744815-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+function $_GET(param)
+{
+  /* Obtener la url completa */
+  url = document.URL;
+  /* Buscar a partir del signo de interrogación ? */
+  url = String(url.match(/\?+.+/));
+  /* limpiar la cadena quitándole el signo ? */
+  url = url.replace("?", "");
+  /* Crear un array con parametro=valor */
+  url = url.split("&");
+ 
+/* 
+Recorrer el array url
+obtener el valor y dividirlo en dos partes a través del signo = 
+0 = parametro
+1 = valor
+Si el parámetro existe devolver su valor
+*/
+  x = 0;
+  while (x < url.length)
+    {
+      p = url[x].split("=");
+        if (p[0] == param)
+        {
+          return decodeURIComponent(p[1]);
+        }
+      x++;
+    }
+}
+</script>
+
+<?php if(isset($_GET['email'])) { ?>
+    <script>
+
+      jQuery(document).ready(function(e){
+          $correo = $_GET("email");
+          $('#email').val($('#email').val() + $correo);
+          $('#email').blur();
+      });
+      
+    </script>
+<?php } ?>
+
+<?php if(isset($_GET['lastname'])) { ?>
+    <script>
+
+      jQuery(document).ready(function(e){
+          $apellidos = $_GET("lastname");
+          $('#lastname').val($('#lastname').val() + $apellidos);
+          $('#lastname').blur();
+      });
+      
+    </script>
+<?php } ?>
+
+<?php if(isset($_GET['firstname'])) { ?>
+    <script>
+
+      jQuery(document).ready(function(e){
+          $nombres = $_GET("firstname");
+          $('#firstname').val($('#firstname').val() + $nombres);
+          $('#firstname').blur();
+      });
+
+    </script>
+<?php } ?>
+
+
+
+<script>
+  jQuery(document).ready(function(e){
+
+  
+  jQuery('#contactpopupsubmit').click(function(event){
+    var name = jQuery('#contact_us_name').val();
+    var email = jQuery('#contact_us_email').val();
+    var phone = jQuery('#contact_us_phone').val()
+    var company = jQuery('#contact_us_company').val();
+    var msg = jQuery('#contact_us_msg').val();
+    var send_email = "camilo@paradisosolutions.com";
+    var url = "<?php echo $this->url($this->route_name) ?>";
+    expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+
+    //console.log(name);
+    //return false;
+    
+    if(name == ''){
+      jQuery('#contact_us_name').css('border-color', '#f00');
+      jQuery('#contact_us_email').css('border-color', '#009BDB');
+      jQuery('#contact_us_msg').css('border-color', '#009BDB');
+      event.preventDefault();
+      return false;
+    } else if(email == ''){
+      jQuery('#contact_us_name').css('border-color', '#009BDB');
+      jQuery('#contact_us_email').css('border-color', '#f00');
+      jQuery('#contact_us_msg').css('border-color', '#009BDB');
+      event.preventDefault();
+      return false;
+    } else if(!expr.test(email)){
+      jQuery('#contact_us_name').css('border-color', '#009BDB');
+      jQuery('#contact_us_email').css('border-color', '#f00');
+      jQuery('#contact_us_msg').css('border-color', '#009BDB');
+      event.preventDefault();
+      return false;
+    } else if(msg == ''){
+      jQuery('#contact_us_msg').css('border-color', '#f00');
+      jQuery('#contact_us_name').css('border-color', '#009BDB');
+      jQuery('#contact_us_email').css('border-color', '#009BDB');
+      event.preventDefault();
+      return false;
+    }
+    
+    jQuery('#contact_us_name').css('border-color', '#009BDB');
+    jQuery('#contact_us_email').css('border-color', '#009BDB');
+    jQuery('#contact_us_msg').css('border-color', '#009BDB');
+    
+    //For Google analytics
+    //ga('send', 'event', 'Contact Us - Popup', 'submit');
+    //end of google analytics
+
+    
+    jQuery.ajax({
+        type: "POST",
+        url: "http://dev.freemium.paradisolms.com/ajax/sendcontact",
+        dataType: 'json',
+        data: { 
+          name: name, 
+          email: email, 
+          company: company, 
+          formajax: 'contact', 
+          send_email: send_email, 
+          phone: phone, 
+          msg: msg, 
+          url: url },
+
+        success: function(data) {
+            console.log("success form");
+        },
+        error: function(data) {
+            console.log("error form");
+        },
+
+    });
+
+
+
+    
+    jQuery('.contactpopup h4, .contactpopup form').fadeOut(500, function(){
+      jQuery('#contactmsgsuccess').fadeIn(500)
+      jQuery('#popupcontactus').delay(2500).fadeOut(500)
+    })
+
+        
+                //Agile CRM Tracking Freemium form
+                 var contact={ };
+
+                contact.first_name = jQuery("#contact_us_name").val();
+                contact.email = jQuery("#contact_us_email").val();
+                contact.phone = jQuery("#contact_us_phone").val();
+                contact.company_name = jQuery("#contact_us_company").val();
+            
+                 _agile.create_contact(contact, {
+                    success: function(data) {
+                      _agile.set_email(contact.email);
+                      console.log("success");
+                    },
+                    error: function(data) {
+                      console.log("error");
+                    }
+                  });
+    });
+ });
+
+</script>
+
+    <script type="text/javascript">
+          jQuery(document).ready(function() {
+                  // La validacion fue puesta en el index.php del tema "paradiso" para que no entrara en conflicto con el codigo de Agile que esta aqui abajo
+
+                      jQuery("#submit").click(function(){
+                                     
+                                      var contact = {};
+
+                                      contact.first_name = jQuery("#firstname").val();
+                                      contact.last_name = jQuery("#lastname").val();
+                                      contact.email = jQuery("#email").val();
+                                      contact.tags = "freemium";
+
+                                      _agile.create_contact(contact, {
+                                            success: function (data) {
+                                              _agile.set_email(contact.email);
+                                                console.log("success");
+                                            },
+                                            error: function (data) {
+                                                console.log("error");
+                                            }
+                                      });
+
+                                      /*event.preventDefault();
+                                      return false;*/
+                      });    
+
+            });                
+
+    </script>
+         
+
+
+         
+         
+        <script type='text/javascript'>
+          var _glc =_glc || []; 
+            _glc.push('all_ag9zfmNsaWNrZGVza2NoYXRyDwsSBXVzZXJzGLy9wNECDA');
+            var glcpath = (('https:' == document.location.protocol) ? 'https://my.clickdesk.com/clickdesk-ui/browser/' : 'http://my.clickdesk.com/clickdesk-ui/browser/');
+            var glcp = (('https:' == document.location.protocol) ? 'https://' : 'http://');
+            var glcspt = document.createElement('script'); glcspt.type = 'text/javascript'; 
+            glcspt.async = true; 
+            glcspt.src = glcpath + 'livechat-new.js';
+            var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(glcspt, s);
+        </script>
+
+        <div id="ok"></div>
+   </body>
+</html>

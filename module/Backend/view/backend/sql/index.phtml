@@ -1,0 +1,84 @@
+<?php
+$com = $this->Communicator();
+
+
+$this->headLink()
+    ->appendStylesheet($this->basePath('/js/select2/css/select2.css'));
+
+echo $this->headScript()
+    ->appendFile($this->basePath('/js/select2/js/select2.js'));
+?>
+
+
+<div class="row">
+    
+        <form method="post">
+            
+            <div class="col-lg-6">
+                <div class="form-group <?php $com->printErrorClass('query')?>">
+                    <label for="query">Query to be executed *</label>
+                    <textarea class="form-control" rows="8" name="query" id="query" class=""><?php echo $this->escapeHtml($this->query)?></textarea>
+                    <p class="help-block">1 query per line.</p> 
+                    <?php $com->printFieldErrors('query') ?>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <?php if($this->executed) : ?>
+                
+                    <?php if($this->result) : ?>
+                        <label for="query">Errors</label>
+                        <div class="well well-sm" style="height:190px;overflow:auto">
+                            <?php foreach($this->result as $item) : ?>
+                                <div style="margin-top:10px;">
+                                    <span><?php echo $item['query']?></span> <span class="label label-danger"><?php echo $item['error']?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else : ?>
+                        <label for="query">Result</label>
+                        <div class="well well-sm" style="height:190px;overflow:auto">
+                            <span class="label label-success">All queries executed</span>
+                        </div>
+                    <?php endif; ?>
+                    
+                <?php endif; ?>
+            </div>
+            
+            <div class="row"></div>
+            
+            <div class="col-lg-5">
+                <div class="form-group <?php $com->printErrorClass('database')?>">
+                    <label for="database">Database</label>
+                    <?php echo $this->HtmlSelect('database', $this->database_ds, $this->database, 'All Databases', array('style' => 'width:100%', 'id' => 'database')) ?>
+                    <?php $com->printFieldErrors('database') ?>
+                </div>
+            </div>
+            
+            <div class="row"></div>
+            
+            <div class="col-lg-5">
+                <div class="form-group <?php $com->printErrorClass('clear_cache')?>">
+                    <input type="checkbox" name="clear_cache" id="clear_cache" value="1" <?php echo $this->clear_cache ? 'checked="checked"' : ''?> />
+                    <label for="clear_cache">Clear cache</label>
+                    
+                    <?php $com->printFieldErrors('clear_cache') ?>
+                </div>
+            </div>
+            
+            <div class="row"></div>
+            
+            <div class="col-lg-3">
+                <div class="form-group">
+                    <input type="submit" value="Execute Query" class="btn btn-primary">
+                </div>
+            </div>
+        </form>
+        
+    </div>
+</div>
+
+<script type="text/javascript">
+jQuery(function(){
+    $("#database").select2();
+});
+</script>

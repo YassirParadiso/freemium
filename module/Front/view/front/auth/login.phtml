@@ -1,0 +1,33 @@
+<?php
+$com = $this->Communicator(); 
+?>
+
+<div class="row">
+    <div class="col-lg-12"><?php $com->printMessage() ?></div>
+    
+    <div class="col-lg-4">
+
+    	
+
+    	<form method="post" action="<?php echo $this->url('auth', array('action' => 'login')) ?>">
+    	
+    	    <div>
+    		    <input 
+                        type="text" 
+                        name="username" 
+                        id="username" 
+                        placeholder="Correo electrónico" 
+                        class="<?php $com->printErrorClass('username')?>" value="<?php echo $this->escapeHtml($this->username)?>" />
+    		    <?php $com->printFieldErrors('username') ?>
+    		</div>
+    		
+    		<div>
+    		    <input type="password" name="password" id="password" placeholder="Conraseña de acceso" class="<?php $com->printErrorClass('password')?>" />
+    		    <?php $com->printFieldErrors('password') ?>
+    		</div>
+    		
+    		<input type="submit" class="btn btn-primary" />
+    	</form>
+    </div>
+
+</div>

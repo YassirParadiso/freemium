@@ -1,0 +1,17 @@
+<?php
+$data = $this->collector->getData();
+$count = count($data);
+?>
+<?php if($count) : ?>
+    <div class="zdt-toolbar-entry">
+        <div class="zdt-toolbar-preview">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAU1QTFRFRSMBRyQBgkIAhEMAiUUBjUcBtl0Dul8EvmEEv2IEtl0DvmEEhEMAjUcBul8EiUUBv2IEsVsDk0oBg0IAv2IEvGAFt14ErFcDv2IEmE0CjEYBgkIApVQCh0QAn1AC04o/uF4EyIE3gkIA251bkUkBrWwspWgqu4BG67h+2qNqz5dfypRezIAz57N388iTrmcizJRc3qt25bSA26dz4rB82aZy4q97cTgce0wmgE0kgFYrhF4vpGtIrHlRuY1hu5FjvHcww6BtyIZD05NR15RP15VQ2J1h2pZM26dz3Kdu3Z9d3al23p9a3qx536164K984adq4a984rF+47OA5bWC5raD57eC6bqH6ryJ67d667yJ7L+M7byD7sGO78GN78OQ8MSR8cSR8saS8siV88eT88qX9MqX9c2a9s2a98+c+NCd+dKf/Naj/Nek/tuoulGsWwAAADd0Uk5TAAAAAAAAAAAAAAkJDAwRGD1DUVhudHh+hY6cn5+gpbO0usDO0dHY4uPo7fHz9Pn6+vr6+/v8/JFyKWAAAADqSURBVBjTLcy9TsMwFIZhH9uxXadpQoWgILGwAOICOjFx3VwDCCZggaGtBFIAt7bjn9o4iDN9eqXnAANICGhFKYoxxEzReJzLCUPeGjf8BSqaW4afrv3dNhICgMXspr6fL3J1vBkDZd0Uq6Mcw/Ni5enom2XyvdfnF1iU5/9efkBQNcZkWnzyxcOP7/lKYyZEePDaPAoWz2xw5KBT8tS9tidEefSysxTjy7KujKr3X2urByJpi94anzf8Xfc7C4TxjhyGjOZm3X9HAEJh20b4FK74lAGgkrNJJUEHqwxKY8iCC47c4AZAaQ+/MmVubW6mAW0AAAAASUVORK5CYII=" alt="Cookies">
+            <span class="zdt-toolbar-info">Cookies (<?php echo $count?>)</span>
+        </div>
+        <div class="zdt-toolbar-detail">
+            <span class="zdt-toolbar-info">
+                <span class="zdt-detail-pre"><pre><?php print_r($data); ?></pre></span>
+            </span>
+        </div>
+    </div>
+<?php endif; ?>

@@ -1,0 +1,11 @@
+<?php
+global $CFG;
+
+$CFG->dbhost    = "{$dbHost}";
+$CFG->dbname    = "{$dbName}";
+$CFG->dbuser    = "{$dbUser}";
+$CFG->dbpass    = "{$dbPassword}";
+
+$CFG->wwwroot   = "https://{$domain}";
+$CFG->dataroot  = "{$dataPath}";
+

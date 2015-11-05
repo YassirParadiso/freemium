@@ -1,0 +1,44 @@
+<?php
+
+$this->headScript()->appendFile($this->basePath('/js/colorbox/colorbox.js'));
+$this->headLink()->appendStylesheet($this->basePath('/js/colorbox/1/colorbox.css'));
+
+?>
+
+<script>
+jQuery(function() {
+
+    $(".delete").click(function(e) {
+        var $self = $(this);
+        
+        var users = $self.attr("data-users");
+        
+        if(users > 1)
+        {
+            var f = confirm("Please confirm that you want to delete the selected instance and the " + users + " related users.\n This action can't be undone.");
+        }
+        else
+        {
+            var f = confirm("Please confirm that you want to delete the selected instance.\n This action can't be undone.");
+        }
+        
+        if(!f)
+        {
+            e.preventDefault();
+        }
+    });
+    
+    $(".iframe").click(function(e) {
+        var $self = $(this);
+        e.preventDefault();
+        
+        $.colorbox({
+            href: $self.attr("href")
+            ,iframe: true
+            ,width: 600
+            ,height: 290
+        });
+    });
+    
+});
+</script>
