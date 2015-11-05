@@ -40,7 +40,7 @@ class IndexController extends Com\Controller\AbstractController
         $client->setMethod(Zend\Http\Request::METHOD_GET);
         
         // If we want a log this should be executed using wkhtmltopdf
-        $bin = '/usr/local/bin/wkhtmltopdf';
+        # $bin = '/usr/local/bin/wkhtmltopdf';
         foreach($rowset as $row)
         {
             $url = "http://{$row->domain}/admin/cron.php";
@@ -49,7 +49,8 @@ class IndexController extends Com\Controller\AbstractController
             #if(strpos($row->domain, 'paradisosolutions') === false)
                 #continue;
             
-            $command = "$bin $url {$coreDir}/data/log/{$row->domain}.pdf > {$coreDir}/data/log/{$row->domain}.log 2>&1 &";
+            # $command = "wget $url {$coreDir}/data/log/{$row->domain}.pdf > {$coreDir}/data/log/{$row->domain}.log 2>&1 &";
+            $command = "wget -q0- $url &>/dev/null";
             
             shell_exec($command);
         }
