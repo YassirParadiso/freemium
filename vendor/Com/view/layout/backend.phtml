@@ -20,17 +20,16 @@
                     )
                 )
                 ->prependStylesheet($this->basePath('/css/backend.css'))
-                ->prependStylesheet($this->basePath('/css/bootstrap-theme.min.css'))
-                ->prependStylesheet($this->basePath('/css/bootstrap.min.css'))
-                ->appendStylesheet('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css');
-
+                ->prependStylesheet($this->basePath('/assets/bootstrap-3.3.6/css/bootstrap-theme.min.css'))
+                ->prependStylesheet($this->basePath('/assets/bootstrap-3.3.6/css/bootstrap.min.css'))
+                ->appendStylesheet('https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css');
         ?>
         <?php echo $this->headStyle(); ?>
 
         <!-- Scripts -->
         <?php 
         echo $this->headScript()
-            ->prependFile($this->basePath('/js/bootstrap.min.js'))
+            ->prependFile($this->basePath('/assets/bootstrap-3.3.6/js/bootstrap.min.js'))
             ->prependFile($this->basePath('/js/jquery.min.js'))
             ->prependFile($this->basePath('/js/respond.min.js'), 'text/javascript', 
                 array('conditional' => 'lt IE 9'))
@@ -39,8 +38,8 @@
         ?>
     </head>
     <body>
-        <nav class="navbar navbar-inverse navbar-top" role="navigation">
-            <div class="container">
+        <div class="container-fluid">
+            <nav class="navbar navbar-inverse navbar-top" role="navigation">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                         <span class="icon-bar"></span>
@@ -61,10 +60,10 @@
                         <?php endif; ?>
                     </ul>
                 </div><!--/.nav-collapse -->
-            </div>
-        </nav>
+            </nav>
+        </div>
         
-        <div class="container">
+        <div class="container-fluid">
             <?php echo $this->content; ?>
             <hr>
             <footer>

@@ -1,0 +1,324 @@
+<?php
+$com = $this->Communicator();
+
+$valueOptions = array(
+    'en' => 'English'
+    ,'es' => 'Español'
+);
+?>
+          
+<div id="form">
+
+   <div id="container">
+
+      <h2><?php echo $this->translate('Create Account')?></h2>
+      
+        <div class="row">
+            <div class="col-xs-4">
+              <form class="form-horizontal" method="post" action="<?php echo $this->url($this->route_name, array('controller' => 'instance', 'action' => 'add-instance')) ?>">
+              
+                 <div id="alert"><?php $com->printMessage() ?></div>
+
+                 <div class="form-group <?php $com->printErrorClass('email'); ?>">
+                    <label><?php echo $this->translate('Email address')?>*</label>
+                    <input type="email" id="email" name="email" value="<?php echo $this->escapeHtml($this->email) ?>" required="required" class="form-control">
+                    <?php $com->printFieldErrors('email'); ?>
+                 </div>
+
+                 <div class="form-group <?php $com->printErrorClass('first_name'); ?>">
+                    <label><?php echo $this->translate('First name')?>*</label>
+                    <input type="text" id="firstname" name="first_name" value="<?php echo $this->escapeHtml($this->first_name) ?>" required="required" class="form-control">
+                    <?php $com->printFieldErrors('first_name'); ?>
+                 </div>
+
+                 <div class="form-group <?php $com->printErrorClass('last_name'); ?>">
+                    <label><?php echo $this->translate('Last name')?>*</label>
+                    <input type="text" id="lastname" name="last_name" value="<?php echo $this->escapeHtml($this->last_name) ?>" required="required" class="form-control">
+                    <?php $com->printFieldErrors('last_name'); ?>
+                 </div>
+
+                 <div class="form-group required large <?php $com->printErrorClass('lang'); ?>" required="required">
+                    <label><?php echo $this->translate('Language')?>*</label>
+                    
+                    
+                    <?php echo $this->HtmlSelect('lang', $valueOptions, $this->lang, null, array('class' =>  'form-control'))?>
+                    <?php $com->printFieldErrors('lang'); ?>
+                 </div>
+                 
+                 <div class="form-group" id="submit" style="margin-top:10px">
+                    <input type="submit" id="submit" value="<?php echo $this->translate('Create account')?>" class="btn btn-primary">
+                 </div>
+
+              </form>
+            </div>
+        </div>
+   </div>
+</div>
+
+       
+  
+        
+
+<script type="text/javascript">
+
+    jQuery("#email").blur(function(){
+        //alert("This input field has lost its focus.");
+        var emailFree = $('#email').val();
+        var url = "<?php echo $this->url('ajax', array('action' => 'validate-email'));?>";
+        var data = {"email": emailFree};
+        $( "#message-email" ).text("");
+        //$( "#message-email" ).fadeIn( "slow" );
+
+        $.post(url, data, function(response){
+            if(response.success == true){
+
+            }
+            else {
+               //$( "#message-email" ).fadeIn( "slow" );
+               $( "#message-email" ).fadeToggle( "1500", "swing" );
+               $( "#message-email" ).addClass("message-email");
+               $( "#message-email" ).append(response.errors.email[0]);
+            }
+        });
+
+        $( "#message-email" ).removeClass("message-email");
+
+    
+    });
+
+$(document).ready(function() {
+
+
+        var validate = $.trim($("#email").val());
+
+        if(validate.length>0)
+        {
+
+
+                var emailFree = $('#email').val();
+
+
+                var url = "<?php echo $this->url('ajax', array('action' => 'validate-email'));?>";
+                var data = {"email": emailFree};
+                $( "#message-email" ).text("");
+                //$( "#message-email" ).fadeIn( "slow" );
+
+                $.post(url, data, function(response){
+                    if(response.success == true){
+
+                    }
+                    else {
+                       //$( "#message-email" ).fadeIn( "slow" );
+                       $( "#message-email" ).fadeToggle( "1500", "swing" );
+                       $( "#message-email" ).addClass("message-email");
+                       $( "#message-email" ).append(response.errors.email[0]);
+                    }
+                });
+
+                $( "#message-email" ).removeClass("message-email");
+
+    }
+});
+</script>
+
+                            
+                
+<script type="text/javascript">
+    $(document).ready(function() {
+          $( ".contact-us" ).click(function() {
+               $( ".contactpopup" ).fadeIn(500);
+               $( ".contactpopup" ).addClass( "displayBlock" );
+               
+          });
+          $( ".close" ).click(function() {
+               $( ".contactpopup" ).fadeOut(500);
+               $( ".contactpopup" ).removeClass( "displayBlock" );     
+          });
+        
+         $('#contactpopupsubmit').click(function(event){
+            event.preventDefault();
+        });
+    });
+</script>
+
+
+
+<script type="text/javascript">
+    var $alert = null;
+    var $loader = null;
+    $('.help').popover({html:true});
+    function show_loader()
+    {
+        $loader.css("visibility", 'visible');
+    }
+    
+    function hide_loader()
+    {
+        $loader.css("visibility", 'hidden');
+    }
+    
+    function blur_email()
+    {
+        $("#instance_label").attr("disabled", "disabled");
+            
+        var $self = $("#email");
+        var email = $self.val();
+        
+        email = email.toLowerCase();
+        $self.val(email);
+        
+        var exploded = email.split("@");
+        
+        if(2 == exploded.length)
+        {
+            exploded = exploded[1].split(".");
+            if(exploded.length > 1)
+            {
+                $("#instance").val(exploded[0]);
+                $("#instance_label").val(exploded[0]);
+                $("#edit_instance").show();
+            }
+            else
+            {
+                $("#edit_instance").hide();
+                $("#instance").val('');
+                $("#instance_label").val('');
+            }
+        }
+        else
+        {
+            $("#edit_instance").hide();
+            $("#instance").val('');
+            $("#instance_label").val('');
+        }
+    }
+
+    jQuery(function() {
+    
+        $alert = $("#alert");
+        $loader = $("#loader");
+        
+        $("#edit_instance").click(function() {
+        
+            var $self = $(this);
+            
+            $self.hide();
+            
+            show_loader();
+            
+            var url = "<?php echo $this->url('ajax', array('action' => 'can-edit-instance'));?>";
+            var data = {email: $("#email").val()};
+            
+            $.post(url, data, function(response) {
+            
+                hide_loader();
+                $self.show();
+                
+                if(response.success)
+                {
+                    $("#instance_label").removeAttr("disabled");
+                    $("#instance").focus();
+                }
+                else
+                {
+                    $("#instance_label").attr("disabled", "disabled");
+                    
+                    var $div = $alert.find("div.alert");
+                    $div.html("<?php echo $this->translate('can_not_edit_instance')?>").css("padding", "0px 10px");
+                    $alert.show();
+                }
+            });
+        });
+        
+        $("#email").blur(blur_email);
+        
+        
+        $("#form").submit(function() {
+            var v = $("#instance_label").val();
+            $("#instance").val(v);
+        })
+    });
+
+    <?php if($this->is_post) : ?>
+        $("#edit_instance").show();
+    <?php endif; ?>
+    
+    <?php if($this->is_post && !$com->isSuccess()) : ?>
+        $("#alert").show();
+    <?php endif; ?>
+    
+    
+    <?php if($this->is_post && $com->isSuccess()) : ?>
+
+        function check_instance_created(done, calls)
+        {
+            show_loader();
+            
+            $("#form_element :input").prop("disabled", true);
+            
+            $("#target :input").prop("disabled", true);
+            
+            var max_calls = 200;
+            var url = "<?php echo $this->url('ajax', array('action' => 'check-instance-created'));?>";
+
+            if(calls >= max_calls)
+            {
+                hide_loader();
+                
+                var $div = $alert.find("div.alert");
+                $div.html("<?php echo $this->translate('unexpected_error')?>").css("padding", "0px 10px");
+                $alert.show();
+                
+                $("#form_element :input").prop("disabled", false);
+                
+                return false;
+            }
+            
+            if (done) 
+            {
+                hide_loader();
+                $alert.show();
+                
+                $("#form_element :input").prop("disabled", false);
+                
+                return true;
+            }
+            
+            $.ajax({
+                url: url
+                ,type: "POST"
+                ,data: { website : "<?php echo $this->website?>" }
+                ,success: function(data)
+                {
+                    console.log(data.success);
+                    
+                    if(!calls)
+                    {
+                        calls = 1;
+                    }
+                    else
+                    {
+                        ++calls;
+                    }
+                    
+                    check_instance_created(data.success, calls);
+                }
+            });
+        }
+
+        jQuery(function() {
+            // check_instance_created(false, 1);
+        });
+
+    <?php endif; ?>
+
+</script>
+
+
+
+
+
+
+
+
+

@@ -16,8 +16,257 @@ class Instance extends Com\Model\AbstractModel
         'gilson@paradisosolutions.com',
         'berardo@paradisosolutions.com',
         'camilo@paradisosolutions.com',
-        'alberto.g@paradisosolutions.com' 
+        'alberto.g@paradisosolutions.com',
+        'salesteam@paradisosolutions.com'
     );
+
+
+
+    /**
+    * This method will check if provided parametters are valid to create an instance.
+    * Also it will check if there is a free database available.
+    * No instance will be created at this point.
+    * This method DO NOT check password because the password is asked to the user after email verification
+    * 
+    * This method will set the available database in the communicator
+    * array(database => array(id => '', db_name => '', db_host => '', db_user => '', db_password => ''))
+    * @return bool
+    */
+    function canCreateInstance(Zend\Stdlib\Parameters $params)
+    {
+        // check required fields
+        $fields = array(
+            'email',
+            'first_name',
+            'last_name',
+            'lang' 
+        );
+        
+        $this->hasEmptyValues($fields, $params);
+
+        if($this->isSuccess())
+        {
+            $sl = $this->getServiceLocator();
+        
+            try
+            {
+                $dbClient = $sl->get('App\Db\Client');
+                $dbClientHasDb = $sl->get('App\Db\Client\HasDatabase');
+                $dbDatabase = $sl->get('App\Db\Database');
+                $dbBlacklistDomain = $sl->get('App\Db\BlacklistDomain');
+                $config = $sl->get('config');
+                
+                $params->email = strtolower($params->email);
+                
+                // check if the email field looks like a real email address
+                $vEmail = new Zend\Validator\EmailAddress();
+                if(! $vEmail->isValid($params->email))
+                {
+                    $this->getCommunicator()->addError($this->_('provide_valid_email'), 'email');
+                    return false;
+                }
+                else
+                {
+                    // check if already exist registered users with the given email address
+                    $where = array();
+                    $where['email = ?'] = $params->email;
+                    if($dbClient->count($where))
+                    {
+                        $this->getCommunicator()->addError($this->_('user_email_already_exist'), 'email');
+                        return false;
+                    }
+                }
+                
+                // all good so far, now we continue with the validations
+                // Here we check stuff related to the domain and instance name
+                $exploded = explode('@', $params->email);
+                $exploded2 = explode('.', $exploded[1]);
+                $instance = trim($exploded2[0]);
+                
+                if(! preg_match('/^[A-Za-z0-9\-]+$/', $instance))
+                {
+                    $this->getCommunicator()->addError($this->_('invalid_characters_instance_name'), 'instance');
+                    return false;
+                }
+                
+                //
+                $isParadisoDomain = $this->_isParadisoDomain($params->email);
+                
+                // check if the domain of the email is allowed to create account
+                $emailDomain = $exploded[1];
+                $where = array();
+                $where['domain = ?'] = $emailDomain;
+                if($dbBlacklistDomain->count($where))
+                {
+                    $this->getCommunicator()->addError($this->_('email_address_not_allowed'), 'email');
+                    return false;
+                }
+                
+                // check if the user can provide a custom instance name
+                // Have in mind that paradiso people can provide instance names
+                $topDomain = $config['freemium']['top_domain'];
+                $domain = "{$instance}.$topDomain";
+                
+                // check if the domain name is good
+                if(! $this->_isValidDomainName($domain))
+                {
+                    $this->getCommunicator()->addError($this->_('invalid_characters_instance_name'), 'instance');
+                }
+                
+                // find a free database
+                $rowDb = $dbDatabase->findFreeDatabase();
+                // ups, no free database found
+                if(! $rowDb)
+                {
+                    $this->getCommunicator()->addError($this->_('unexpected_error'));
+                    $this->_createDatabasesScript();
+                    return false;
+                }
+                
+                $this->getCommunicator()->setData(array('database' => $rowDb->toArray()));
+            }
+            catch(\Exception $e)
+            {
+                echo $e;
+                $this->setException($e);
+            }
+        }
+        
+        return $this->isSuccess();
+    }
+
+
+    /**
+    *
+    * This method will insert records in `client` table.
+    * Also this method will sync tables as probably the database schema is not updated since the creation.
+    * No instance will be created at this point.
+    *
+    * ############# IMPORTANT #############
+    * Before calling this method you can to validate $params using canCreateInstance() method
+    * Don't forget to set the database id in the $params as follow $params->database_id = $id
+    * You can get the database from the communicator after calling canCreateInstance() method
+    */
+    function doCreateAccount(Zend\Stdlib\Parameters $params)
+    {
+        $sl = $this->getServiceLocator();
+
+        try
+        {
+            $dbClient = $sl->get('App\Db\Client');
+            $config = $sl->get('config');
+
+            $topDomain = $config['freemium']['top_domain'];
+            $domain = "{$instance}.$lang.$topDomain";
+
+            $lang = $params->lang;
+
+            $isParadisoDomain = $this->_isParadisoDomain($params->email);
+                
+            // check if already exist a registered users with the domain name
+            if($isParadisoDomain)
+            {
+                $where = array();
+                $where['domain = ?'] = $domain;
+                $rowClient = $dbClient->findBy($where, array(), null, 1)->current();
+                do
+                {
+                    $str = str_replace('.com', '', $params->instance);
+                    $str .= mt_rand(1, 9000000);
+                    
+                    $domain = "$str.$topDomain";
+                    $website = "http://{$domain}";
+                    
+                    $where = array();
+                    $where['domain = ?'] = $domain;
+                }
+                while($dbClient->count($where) > 0);
+            }
+
+            $data = array();
+            $data['email'] = $params->email;
+            $data['password'] = 'trial';
+            $data['domain'] = $domain;
+            $data['first_name'] = $params->first_name;
+            $data['last_name'] = $params->last_name;
+            $data['created_on'] = date('Y-m-d H:i:s');
+            $data['deleted'] = 0;
+            $data['approved'] = 0;
+            $data['email_verified'] = 0;
+            $data['logo'] = '';
+            $data['lang'] = $lang;
+            
+            
+            //
+            $dbClient->doInsert($data);
+            $clientId = $dbClient->getLastInsertValue();
+
+            /////////////////////////////////////////////
+            # send the confirmation email to the user
+            /////////////////////////////////////////////
+
+            // prepare the verification code
+            $cPassword = new Com\Crypt\Password();
+            $plain = $params->email;
+            $code = $cPassword->encode($plain);
+
+            $request = $sl->get('request');
+            $uri = $request->getUri();
+            $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}";
+            
+            $routeParams = array();
+            $routeParams['action'] = 'verify-account';
+            $routeParams['code'] = $code;
+            $routeParams['email'] = $params->email;
+            
+            $viewRenderer = $sl->get('ViewRenderer');
+            $url = $serverUrl . $viewRenderer->url('auth/wildcard', $routeParams);
+            
+            // preparing some replacement values
+            $data = array();
+            $data['follow_us'] = $this->_('follow_us');
+            $data['body'] = $this->_('confirm_your_email_address_body', array(
+                $url,
+                $params->email,
+                $params->password 
+            ));
+            $data['header'] = '';
+            
+            // load the email template and replace values
+            $mTemplate = $sl->get('App\Model\EmailTemplate');
+            
+            $langString = '';
+            if('es' == $lang)
+            {
+                $langString = "_$lang";
+            }
+            
+            $arr = $mTemplate->loadAndParse("common{$langString}", $data);
+            
+            //
+            $mailer = new Com\Mailer();
+            
+            // prepare the message to be send
+            $message = $mailer->prepareMessage($arr['body'], null, $this->_('confirm_your_email_address_subject'));
+            
+            $message->setTo($params->email);
+            foreach($this->mailTo as $mail)
+            {
+                $message->addBcc($mail);
+            }
+            
+            // prepare de mail transport and send the message
+            $transport = $mailer->getTransport($message, 'smtp1', 'sales');
+            $transport->send($message);
+        }
+        catch(\Exception $e)
+        {
+            $this->setException($e);
+        }
+
+        return $this->isSuccess();
+    }
+
 
 
     /**

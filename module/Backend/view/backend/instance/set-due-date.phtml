@@ -1,0 +1,31 @@
+<?php 
+$com = $this->Communicator();
+
+echo $this->headScript()
+    ->appendFile($this->basePath('/js/bootstrap-datepicker/bootstrap-datepicker.js'))
+?>
+
+<div class="row">
+    <form action="" method="post">
+        <div class="col-md-2">
+            
+            <?php $com->printMessage() ?>
+
+            <div class="form-group">
+                <label for="due_date">Due date</label>
+                <input type="text" class="form-control" id="due_date" name="due_date" value="<?php echo $this->due_date?>" readonly="readonly">
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary">
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+$('#due_date').datepicker({
+    format: 'yyyy-mm-dd',
+    startDate: '-0d'
+});
+</script>

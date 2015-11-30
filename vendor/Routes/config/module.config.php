@@ -35,6 +35,24 @@ return array(
                     ) 
                 ) 
             ),
+
+            'services' => array(
+                'type' => 'Zend\Mvc\Router\Http\segment',
+                'options' => array(
+                    'route' => '/services/:controller/:action',
+                    'defaults' => array(
+                        '__NAMESPACE__' => 'Services\Controller',
+                    ) 
+                ),
+                
+                'may_terminate' => true,
+                
+                'child_routes' => array(
+                    'wildcard' => array(
+                        'type' => 'Wildcard' 
+                    ) 
+                ) 
+            ),
             
             'internal' => array(
                 'type' => 'Zend\Mvc\Router\Http\Literal',

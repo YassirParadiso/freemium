@@ -173,24 +173,27 @@ class IndexController extends Com\Controller\AbstractController
                     $err = isset($response['error']) ? $response['error'] : $response['event']['error'];
                     throw new \RuntimeException($err);
                 }
+
+                $console->writeLine("Database $newDatabaseNamePrefixed created", 11);
                 
                 /*******************************/
                 // update database schema
                 /*******************************/
-                $adapter = $sl->get('adapter');
-                $sql = "ALTER SCHEMA `$newDatabaseNamePrefixed`  DEFAULT CHARACTER SET utf8  DEFAULT COLLATE utf8_general_ci \n";
-                $statement = $adapter->query($sql, 'execute');
-                $console->writeLine("Created database $newDatabaseNamePrefixed", 11);
+                #$adapter = $sl->get('adapter');
+                #$sql = "ALTER SCHEMA `$newDatabaseNamePrefixed`  DEFAULT CHARACTER SET utf8  DEFAULT COLLATE utf8_general_ci \n";
+                #$statement = $adapter->query($sql, 'execute');
+                #$console->writeLine("Schema updated on database $newDatabaseNamePrefixed", 11);
+
 
                 /*******************************/
                 // Assign user to db
                 /*******************************/
-                $dbUserName = 'user';
+                $dbUserName = 'paradiso_user';
                 $response = $cp->api2_query($cpanelUser, 
                     'MysqlFE', 'setdbuserprivileges',
                     array(
                         'privileges' => 'ALL_PRIVILEGES',
-                        'db' => $newDatabaseName,
+                        'db' => $newDatabaseNamePrefixed,
                         'dbuser' => $dbUserName,
                         )
                     );
@@ -202,13 +205,14 @@ class IndexController extends Com\Controller\AbstractController
                     $err = isset($response['error']) ? $response['error'] : $response['event']['error'];
                     throw new \RuntimeException($err);
                 }
-                $console->writeLine("Assiged user to database $newDatabaseNamePrefixed", 11);
+                $console->writeLine("Assiged user $dbUserName to database $newDatabaseNamePrefixed", 11);
+
 
                 /*******************************/
                 // RESTORING database
                 /*******************************/
                 $console->writeLine("Restoring data into $newDatabaseNamePrefixed", 11);
-                exec("mysql -u{$cpanelUser} -p{$cpanelPass} $newDatabaseNamePrefixed < $masterSqlFile");
+                exec("mysql -u{$dbUser} -p{$dbPassword} $newDatabaseNamePrefixed < $masterSqlFile");
                 $console->writeLine("Restoration completed", 11);
 
                 $msg = "-----------------------------------";

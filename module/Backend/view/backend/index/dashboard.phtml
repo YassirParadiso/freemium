@@ -15,6 +15,12 @@ $userId = $this->GlobalVars('identity.id', 0);
             <li>
                 <a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'list')); ?>">Instances</a>
             </li>
+            <li>
+                <a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'add-instance')); ?>">Add Instance</a>
+            </li>
+            <li>
+                <a target="_blank" href="<?php echo $this->url('backend', array('controller' => 'sql', 'action' => 'dump-database')); ?>">Dump master database</a>
+            </li>
             <!--li>
                 <a onclick="return _confirm()" href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'delete-free-db')); ?>">Delete free databases</a>
             </li-->

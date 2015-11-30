@@ -26,6 +26,92 @@ class InstanceController extends Com\Controller\BackendController
         
         return $view;
     }
+
+    function setDueDateAction()
+    {
+        $this->layout('layout/blank');
+
+        $sl = $this->getServiceLocator();
+        $request = $this->getRequest();
+
+        $client = $this->_params('client');
+
+        $dbClient = $sl->get('App\Db\Client');
+        $row = $dbClient->findByPrimarykey($client);
+        $found = false;
+
+        if($row && (0 == $row->deleted))
+        {
+            $found = true;
+
+            if($row->due_date)
+            {
+                $this->assign('due_date', $row->due_date);
+            }
+        }
+
+        if(!$found)
+        {
+            $this->getCommunicator()->addError('Sorry, instance not found');
+        }
+        
+        if($found && $request->isPost())
+        {
+            // first we need to check if the given date is ok
+            $dueDate = $request->getPost('due_date');
+            $time = strtotime($dueDate);
+            if($time)
+            {
+                $date = date('M d, Y', $time);
+                $today = date('Y-m-d');
+
+                $datetime1 = new \DateTime($dueDate);
+                $datetime2 = new \DateTime($today);
+                $interval = $datetime2->diff($datetime1);
+                $difference = (int)$interval->format('%R%a');
+
+                if($difference > -1)
+                {
+                    $data = array(
+                        'due_date' => $dueDate
+                    );
+                    $dbClient->doUpdate($data, array('domain' => $row->domain));
+                }
+                else
+                {
+                    $this->getCommunicator()->addError('Please provide a valid due date');
+                }
+            }
+            else
+            {
+                $this->getCommunicator()->addError('Please provide a valid due date');
+            }
+        }
+
+        $this->assign($request->getPost());
+
+        return $this->viewVars;
+    }
+
+
+    function addInstanceAction()
+    {
+        $this->loadCommunicator();
+        $request = $this->getRequest();
+        
+        $params = $request->getPost();
+        if($request->isPost())
+        {
+            $sl = $this->getServiceLocator();
+            $mInstance = $sl->get('App\Model\Freemium\Instance');
+
+            $mInstance->canCreateInstance($params);
+        }
+
+        $this->assign($params);
+
+        return $this->viewVars;
+    }
     
     
     

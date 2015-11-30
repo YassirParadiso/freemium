@@ -1,18 +1,35 @@
-Please follow these steps to integrate your <a target="_blank" href="<?php echo $this->store_url?>">Shopify store</a> with your <a target="_blank" href="<?php echo $this->lms_url?>">Paradiso LMS</a> website<br>
+<div class="row">
+    <div class="col-md-12" style="">
+        Here's a simple guide on how to integrate your <a target="_blank" href="<?php echo $this->store_url?>">Shopify store</a> with your <a target="_blank" href="<?php echo $this->lms_url?>">Paradiso LMS</a> website.<br>
 
-<ol>
-    <li> Go to your <a target="_blank" href="<?php echo $this->store_url?>"> Shopify store</a> to create/edit a product and set a unique sku value.</li>
-    <li> Go to your <a target="_blank" href="<?php echo $this->lms_url?>">Paradiso LMS</a> website and create/edit a course and set the Course ID number the same value as the product in your Shopify store</li>
-    <li>Thas it, when a Payment Status of the order is set as Paid in Shopify then, the system will look for customer matches the product SKU against the Course ID number</li>
-</ol>
+        <ol>
+            <li style="padding-bottom:40px">
+                Go to your <a target="_blank" href="<?php echo $this->store_url?>">Shopify store</a> to create/edit a product and set a unique sku value.<br><br>
+                <img src="<?php echo $this->basePath('/img/shopify-integration-help/1.png')?>" >
+                <img src="<?php echo $this->basePath('/img/shopify-integration-help/1.1.png')?>" >
+            </li>
+            <li style="padding-bottom:40px">
+                Go to your <a target="_blank" href="<?php echo $this->lms_url?>">Paradiso LMS</a> website and create/edit a course and set the Course ID number the same value as the product in your <a target="_blank" href="<?php echo $this->store_url?>">Shopify store</a><br><br>
+                <img src="<?php echo $this->basePath('/img/shopify-integration-help/2.png')?>" >
+                <img src="<?php echo $this->basePath('/img/shopify-integration-help/2.1.png')?>" >
+                <img src="<?php echo $this->basePath('/img/shopify-integration-help/2.2.png')?>" >
 
-To be able to test you should create a product in your Shopify store and set the SKU equal to MDL-101<br>
-OR, you can go to the Paradiso LMS platform and edit any of the existing courses to get the Course ID Number copy the value and paste it in the SKU field on Shopify product.
+                <br>Now you are all set.
+            </li>
+            <li style="padding-bottom:40px">
+                Once payment status changes to paid on Shopify, the system looks for course match with the unique SKU value against the course ID number mentioned on the LMS.
+            </li>
+        </ol>
 
-
-Test scenario:<br>
-- The user buy a course on Shopify.<br>
-- The Payment Status of the order is set as Paid in Shopify.<br>
-- The customer should get an email with the login information to the Paradiso LMS platform.<br>
-- The customer should be able to login into the Paradiso LMS platform and also should be enrolled into the purchased course on Shopify.<br>
-
+        <br>
+        You can also test by creating a product in your Shopify store and set the SKU equal to <strong>MDL-101</strong><br>
+        <strong>OR</strong><br>
+        You can go to the Paradiso LMS platform and edit any of the existing courses to get the Course ID Number. Copy that value and paste it in the SKU field on Shopify product. 
+        <br><br>
+        <strong>Test scenario:</strong><br>
+        - The user buys a course on Shopify.<br>
+        - The Payment Status of the order is set as Paid in Shopify.<br>
+        - The customer then gets an email with the login information to Paradiso LMS platform.<br>
+        - The customer should be able to login into Paradiso LMS platform and also get enrolled to the purchased course from Shopify.<br>
+    </div>
+<div>
