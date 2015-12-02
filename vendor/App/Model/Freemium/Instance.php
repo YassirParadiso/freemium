@@ -10,15 +10,21 @@ class Instance extends Com\Model\AbstractModel
 
     protected $fileMimeType;
 
-    protected $mailTo = array(
-        'yassir@paradisosolutions.com',
-        'andres.a@paradisosolutions.com',
-        'gilson@paradisosolutions.com',
-        'berardo@paradisosolutions.com',
-        'camilo@paradisosolutions.com',
-        'alberto.g@paradisosolutions.com',
-        'salesteam@paradisosolutions.com'
-    );
+    protected $mailTo = array();
+
+
+    function setServiceLocator(\Zend\ServiceManager\ServiceLocatorInterface $serviceLocator)
+    {
+        parent::setServiceLocator($serviceLocator);
+        
+        $config = $serviceLocator->get('config');
+        $mailTo = $config['freemium']['mail_to'];
+
+        $this->mailTo = $mailTo;
+
+        return $this;
+    }
+
 
 
 
@@ -28,8 +34,6 @@ class Instance extends Com\Model\AbstractModel
     * No instance will be created at this point.
     * This method DO NOT check password because the password is asked to the user after email verification
     * 
-    * This method will set the available database in the communicator
-    * array(database => array(id => '', db_name => '', db_host => '', db_user => '', db_password => ''))
     * @return bool
     */
     function canCreateInstance(Zend\Stdlib\Parameters $params)
@@ -122,12 +126,9 @@ class Instance extends Com\Model\AbstractModel
                     $this->_createDatabasesScript();
                     return false;
                 }
-                
-                $this->getCommunicator()->setData(array('database' => $rowDb->toArray()));
             }
             catch(\Exception $e)
             {
-                echo $e;
                 $this->setException($e);
             }
         }
@@ -144,8 +145,6 @@ class Instance extends Com\Model\AbstractModel
     *
     * ############# IMPORTANT #############
     * Before calling this method you can to validate $params using canCreateInstance() method
-    * Don't forget to set the database id in the $params as follow $params->database_id = $id
-    * You can get the database from the communicator after calling canCreateInstance() method
     */
     function doCreateAccount(Zend\Stdlib\Parameters $params)
     {
@@ -154,12 +153,18 @@ class Instance extends Com\Model\AbstractModel
         try
         {
             $dbClient = $sl->get('App\Db\Client');
+            $dbClientDatabase = $sl->get('App\Db\Client\HasDatabase');
+            $dbDatabase = $sl->get('App\Db\Database');
             $config = $sl->get('config');
+
+            $exploded = explode('@', $params->email);
+            $exploded2 = explode('.', $exploded[1]);
+            $instance = trim($exploded2[0]);
+
+            $lang = $params->lang;
 
             $topDomain = $config['freemium']['top_domain'];
             $domain = "{$instance}.$lang.$topDomain";
-
-            $lang = $params->lang;
 
             $isParadisoDomain = $this->_isParadisoDomain($params->email);
                 
@@ -191,73 +196,50 @@ class Instance extends Com\Model\AbstractModel
             $data['last_name'] = $params->last_name;
             $data['created_on'] = date('Y-m-d H:i:s');
             $data['deleted'] = 0;
-            $data['approved'] = 0;
+            $data['approved'] = 1;
             $data['email_verified'] = 0;
             $data['logo'] = '';
             $data['lang'] = $lang;
-            
-            
+            $data['due_date'] = null;
+
+            if($params->password)
+                $data['password'] = $params->password;
+
             //
             $dbClient->doInsert($data);
             $clientId = $dbClient->getLastInsertValue();
 
-            /////////////////////////////////////////////
-            # send the confirmation email to the user
-            /////////////////////////////////////////////
+            #$dbClient->doDelete(function($where) use($clientId){
+            #    $where->equalTo('id', $clientId);
+            #});
 
-            // prepare the verification code
-            $cPassword = new Com\Crypt\Password();
-            $plain = $params->email;
-            $code = $cPassword->encode($plain);
+            // database
+            $rowDb = $dbDatabase->findFreeDatabase();
+            $data = array(
+                'client_id' => $clientId
+                ,'database_id' => $rowDb->id
+            );
+
+            $dbClientDatabase->doInsert($data);
 
             $request = $sl->get('request');
             $uri = $request->getUri();
-            $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}";
-            
-            $routeParams = array();
-            $routeParams['action'] = 'verify-account';
-            $routeParams['code'] = $code;
-            $routeParams['email'] = $params->email;
-            
-            $viewRenderer = $sl->get('ViewRenderer');
-            $url = $serverUrl . $viewRenderer->url('auth/wildcard', $routeParams);
-            
-            // preparing some replacement values
-            $data = array();
-            $data['follow_us'] = $this->_('follow_us');
-            $data['body'] = $this->_('confirm_your_email_address_body', array(
-                $url,
-                $params->email,
-                $params->password 
-            ));
-            $data['header'] = '';
-            
-            // load the email template and replace values
-            $mTemplate = $sl->get('App\Model\EmailTemplate');
-            
-            $langString = '';
-            if('es' == $lang)
-            {
-                $langString = "_$lang";
-            }
-            
-            $arr = $mTemplate->loadAndParse("common{$langString}", $data);
-            
-            //
-            $mailer = new Com\Mailer();
-            
-            // prepare the message to be send
-            $message = $mailer->prepareMessage($arr['body'], null, $this->_('confirm_your_email_address_subject'));
-            
-            $message->setTo($params->email);
-            foreach($this->mailTo as $mail)
-            {
-                $message->addBcc($mail);
-            }
-            
-            // prepare de mail transport and send the message
-            $transport = $mailer->getTransport($message, 'smtp1', 'sales');
-            $transport->send($message);
+            $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/services/instance/sync-database-and-notify/client_id/$clientId";
+
+            // make a call to the method that will create the tables
+            // and notify the user
+            $ch = curl_init();
+ 
+            curl_setopt($ch, CURLOPT_URL, $serverUrl);
+            curl_setopt($ch, CURLOPT_USERPWD, "client:Laure1es");  
+            curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+             
+            $content = curl_exec($ch);
+            curl_close($ch);
+
+            #echo $content;
+            $this->getCommunicator()->setSuccess("User account created");
         }
         catch(\Exception $e)
         {
@@ -1812,11 +1794,28 @@ class Instance extends Com\Model\AbstractModel
             //
             if($this->isSuccess())
             {
+                $rowset = $dbDatabase->findDatabaseByClientId($row->id);
+                if(!$rowset->count())
+                {
+                    $this->getCommunicator()->addError($this->_('unexpected_error'));
+                    return false;
+                }
+
+                foreach ($rowset as $rowDatabase)
+                {
+                    $dbName = $rowDatabase->db_name;
+                    $this->_restoreData($dbName);
+                }
+
                 
+                $config = $sl->get('config');
+                $days = $config['freemium']['due_days'];
+
                 $row->email_verified = 1;
                 $row->email_verified_on = date('Y-m-d H:i:s');
                 $row->approved_on = date('Y-m-d H:i:s');
                 $row->approved = 1;
+                $row->due_date = date('Y-m-d', strtotime("+$days days"));
                 
                 $where = array();
                 $where['id = ?'] = $row->id;
@@ -1824,11 +1823,8 @@ class Instance extends Com\Model\AbstractModel
                 $dbClient->doUpdate($row->toArray(), $where);
                 
                 //
-                $rowset = $dbDatabase->findDatabaseByClientId($row->id);
-                if($rowset->count())
+                foreach ($rowset as $rowDb)
                 {
-                    $rowDb = $rowset->current();
-                    
                     $sql = "
                     UPDATE mdl_user SET 
                         `confirmed` = ?
@@ -1842,7 +1838,7 @@ class Instance extends Com\Model\AbstractModel
                         $params->email 
                     ));
                 }
-                
+            
                 $this->getCommunicator()->setSuccess($this->_('account_verified', array(
                     "http://{$row->domain}/logo.php" 
                 )));
@@ -1854,6 +1850,47 @@ class Instance extends Com\Model\AbstractModel
         }
         
         return $this->isSuccess();
+    }
+
+
+
+    protected function _restoreData($dbName)
+    {
+        $sl = $this->getServiceLocator();
+        $config = $sl->get('config');
+        
+        $username = $config['freemium']['cpanel']['username'];
+        $password = $config['freemium']['cpanel']['password'];
+        $host = $config['freemium']['cpanel']['server'];
+        
+        #$db = new \PDO("mysql:host={$host};dbname=$dbName;charset=utf8", $username, $password);
+        #mysql_connect($host, $username, $password);
+        $cnn = mysqli_connect($host, $username, $password, $dbName);
+        #mysql_select_db($dbName);
+
+        $folder = $config['freemium']['path']['master_freemium_data'];
+
+        foreach(glob("$folder/*.sql") as $item)
+        {
+            if(0 == filesize($item))
+            {
+                continue;
+            }
+
+            $info = pathinfo($item);
+            $tableName = str_replace('.sql', '', $info['basename']);
+
+
+            $sql = <<<xxx
+
+LOAD DATA LOCAL INFILE '$item' 
+INTO TABLE `$tableName`
+
+xxx;
+
+            mysqli_query($cnn, $sql);
+        }
+        
     }
 
 

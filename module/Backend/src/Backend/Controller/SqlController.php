@@ -257,7 +257,7 @@ xxx;
         ########### IMPORTANT ########### 
         ########### ########### ########### 
         # make sure you have granted FILE to user
-        # GRANT FILE ON *.* TO 'asdfsdf'@'%';
+        # GRANT FILE ON *.* TO 'user'@'%';
         ########### ########### ########### 
         ########### ########### ########### 
         $sl = $this->getServiceLocator();
@@ -291,10 +291,15 @@ xxx;
                     chmod($folder, $newUmask);
                 }
             }
-            
+
+            $masterDatabase = $config['freemium']['master_instance']['database'];
+            $masterHost = $config['freemium']['master_instance']['host'];
+            $masterUser = $config['freemium']['master_instance']['user'];
+            $masterPassword = $config['freemium']['master_instance']['password'];
 
             // lest connect to the master database
-            $adapter = $this->_getAdapter('paradiso_trial');
+            $adapter = $this->_getAdapter($masterDatabase, $masterHost, $masterUser, $masterPassword);
+            $adapter2 = $this->_getAdapter($masterDatabase);
 
             // get all tables
             $sql = "show tables";
@@ -324,7 +329,7 @@ xxx;
                 FROM `$tableName`
 xxx;
                
-                $adapter->query($sql)->execute();
+                $adapter2->query($sql)->execute();
             }
 
             # echo "<a target='_blank' href='/backend/sql/delete-tables/folder/$unique'>Delete tables</a> - $unique";
@@ -420,14 +425,25 @@ xxx;
 
 
 
-    function _getAdapter($database)
+    function _getAdapter($database, $host = null, $username = null, $password = null)
     {
         $sl = $this->getServiceLocator();
         $config = $sl->get('config');
         
-        $username = $config['freemium']['cpanel']['username'];
-        $password = $config['freemium']['cpanel']['password'];
-        $host = $config['freemium']['cpanel']['server'];
+        if(empty($username))
+        {
+            $username = $config['freemium']['cpanel']['username'];
+        }
+        
+        if(empty($password))
+        {
+            $password = $config['freemium']['cpanel']['password'];
+        }
+        
+        if(empty($host))
+        {
+            $host = $config['freemium']['cpanel']['server'];
+        }
 
         // lest connect to the master database
         $adapter = new Zend\Db\Adapter\Adapter(array(

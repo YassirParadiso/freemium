@@ -27,6 +27,7 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface, Co
             'create-databases' => 'Create databases',
             'remove-accounts' => 'Remove all deleted accounts older than 30 days',
             'run-cron' => 'Executes the cron of all instances',
+            'disable-instances' => 'Disable overdue instances',
          
             // Describe expected parameters
         );

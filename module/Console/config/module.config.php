@@ -33,6 +33,19 @@ return array(
                         ),
                     ),
                 ),
+
+                'disable-instances' => array(
+                    'options' => array(
+                        'route' => 'disable-instances',
+                        'defaults' => array(
+                            '__NAMESPACE__' => 'Console\Controller',
+                            'controller' => 'Index',
+                            'action' => 'disable-instances'
+                        ),
+                    ),
+                ),
+
+                
                 
                 'remove-accounts' => array(
                     'options' => array(

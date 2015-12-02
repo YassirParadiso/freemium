@@ -231,6 +231,139 @@ class IndexController extends Com\Controller\AbstractController
     }
 
 
+    function disableInstancesAction()
+    {
+        $request = $this->getRequest();
+
+        // Make sure that we are running in a console and the user has not tricked our
+        // application into running this action from a public web server.
+        if (!$request instanceof ConsoleRequest)
+        {
+            throw new \RuntimeException('You can only use this action from a console!');
+        }
+
+        try
+        {
+            $console = Console::getInstance();
+
+            if($this->_isLocked(__method__))
+            {
+                $msg = "Already running...";
+                $console->writeLine($msg, 10);
+                exit;
+            }
+            else
+            {
+                $this->_lock(__method__);
+                
+                $msg = "Started at ".date('Y-m-d H:i:s') . PHP_EOL;
+                $console->writeLine($msg, 11);
+            }
+
+            $sl = $this->getServiceLocator();
+
+            $config = $sl->get('config');
+
+            $masterDatabase = $config['freemium']['master_instance']['database'];
+            $masterHost = $config['freemium']['master_instance']['host'];
+            $masterUser = $config['freemium']['master_instance']['user'];
+            $masterPassword = $config['freemium']['master_instance']['password'];
+
+            $masterAdapter = $this->_getInstanceAdapter($masterHost, $masterUser, $masterPassword, $masterDatabase);
+            $masterUser = $this->_getAdminUserFromMasterInstance($masterAdapter);
+
+            $adapter = $sl->get('adapter');
+
+            $dbClient = $sl->get('App\Db\Client');
+            $dbClientDatabase = $sl->get('App\Db\Client\HasDatabase');
+            $dbDatabase = $sl->get('App\Db\Database');
+
+            $sql2 = new Zend\Db\Sql\Sql($adapter);
+
+            // get all instances that have to be disabled today
+            $msg = "Getting instances that have to be disabled today" . PHP_EOL;
+            $console->writeLine($msg, 11);
+
+            $sql = $dbClient->getSql();
+            $select = $sql->select();
+            $select->where(function($where){
+                $time = time();
+                $today = date('Y-m-d', $time);
+
+                $where->equalTo('due_date', $today);
+                $where->equalTo('deleted', 0);
+            });
+
+            $select->group('domain');
+
+            $rowset = $dbClient->selectWith($select);
+
+            $msg = "{$rowset->count()} recods found" . PHP_EOL;
+            $console->writeLine($msg, 11);
+            foreach($rowset as $row)
+            {
+                // get related databases
+                $select2 = $sql2->select();
+                $select2->from(array('cd' => $dbClientDatabase->getTable()));
+                $select2->join(array('d' => $dbDatabase->getTable()), 'd.id = cd.database_id');
+
+                $select2->where(function($where) use($row) {
+                    $where->equalTo('client_id', $row->id);
+                });
+
+                $query = $sql2->buildSqlString($select2);
+                $rowset2 = $adapter->createStatement($query)->execute();
+                foreach ($rowset2 as $row2)
+                {
+                    $host = $row->domain;
+                    $username = $row2['db_user'];
+                    $password = $row2['db_password'];
+                    $database = $row2['db_name'];
+
+                    $adapter3 = $this->_getInstanceAdapter($host, $username, $password, $database);
+
+                    // change the admin user credentials
+                    // set the same values we have in the maste rinstance
+                    if($masterUser)
+                    {
+                        $msg = "Update admin user credentials." . PHP_EOL;
+                        $console->writeLine($msg, 11);
+
+                        $query2 = "UPDATE mdl_user SET username = ? ,email = ? ,password = ? WHERE id = 2";
+                        $adapter3->query($query2)->execute(array(
+                            $masterUser['username']
+                            ,$masterUser['email']
+                            ,$masterUser['password']
+                        ));
+                    }
+
+                    $msg = "disable all other users ." . PHP_EOL;
+                    $console->writeLine($msg, 11);
+                    // now disable all other users of the instance                    
+                    $query3 = "UPDATE mdl_user SET suspended = 1 WHERE id != 2";
+                    $adapter3->query($query3)->execute();
+                }
+            }
+
+            $msg = "\nEnded at ".date('Y-m-d H:i:s') . "";
+            $console->writeLine($msg, 11);
+        }
+        catch (RuntimeException $e)
+        {
+            $this->_unlock(__method__);
+        }
+
+        $this->_unlock(__method__);
+    }
+
+
+    protected function _getAdminUserFromMasterInstance($adapter)
+    {
+        $query = "SELECT * FROM mdl_user WHERE id = 2";
+        $rowset = $adapter->query($query)->execute();
+        return $rowset->current();
+    }
+
 
     function removeAccountsAction()
     {
@@ -403,5 +536,22 @@ class IndexController extends Com\Controller\AbstractController
         
         $fileName = "data/tmp/$methodName.lock";
         unlink($fileName);
+    }
+
+
+    protected function _getInstanceAdapter($host, $username, $password, $database)
+    {
+        return new \Zend\Db\Adapter\Adapter(array(
+            'driver' => 'mysqli',
+            'database' => $database,
+            'username' => $username,
+            'password' => $password,
+            'hostname' => $host,
+            'profiler' => true,
+            'charset' => 'UTF8',
+            'options' => array(
+                'buffer_results' => true 
+            ) 
+        ));
     }
 }

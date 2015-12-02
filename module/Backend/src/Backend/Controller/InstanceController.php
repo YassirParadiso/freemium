@@ -105,7 +105,17 @@ class InstanceController extends Com\Controller\BackendController
             $sl = $this->getServiceLocator();
             $mInstance = $sl->get('App\Model\Freemium\Instance');
 
-            $mInstance->canCreateInstance($params);
+            $flag = $mInstance->canCreateInstance($params);
+            $this->setCommunicator($mInstance->getCommunicator());
+            if($flag)
+            {
+                $flag = $mInstance->doCreateAccount($params);
+                $this->setCommunicator($mInstance->getCommunicator());
+                if($flag)
+                {
+                    ;
+                }
+            }
         }
 
         $this->assign($params);
