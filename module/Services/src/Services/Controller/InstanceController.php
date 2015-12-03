@@ -11,7 +11,6 @@ class InstanceController extends Com\Controller\AbstractController
     function getDueDateAction()
     {
         $this->layout('layout/blank');
-        $this->basicAuthentication('webservices');
 
         $sl = $this->getServiceLocator();
         $com = $this->getCommunicator();
