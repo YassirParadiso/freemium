@@ -145,6 +145,7 @@ class AjaxController extends Com\Controller\AbstractController
 
     function sendcontactAction()
     {
+        $sl = $this->getServiceLocator();
         $request = $this->getRequest();
 
         $name = $request->getPost('name');
@@ -159,7 +160,15 @@ class AjaxController extends Com\Controller\AbstractController
         '<br/>Email: '.$email.'<br/>Company:'.$company.'<br/>Phone:'.$phone.'<br/>Message:'.$msg;
         
         $message = $mailer->prepareMessage($html_msg, null, 'Contacto Freemium');
-        $message->setTo('alberto.g@paradisosolutions.com');
+
+        $config = $sl->get('config');
+        $mailTo = $config['freemium']['mail_to'];
+
+        foreach ($mailTo as $email)
+        {
+            $message->addTo($email);
+        }
+
         $transport = $mailer->getTransport($message, 'smtp1', 'sales');
         $transport->send($message);
                     

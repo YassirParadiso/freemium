@@ -349,7 +349,7 @@ Si el parámetro existe devolver su valor
     
     jQuery.ajax({
         type: "POST",
-        url: "http://dev.freemium.paradisolms.com/ajax/sendcontact",
+        url: "<?php echo $this->basePath('/ajax/sendcontact') ?>",
         dataType: 'json',
         data: { 
           name: name, 
@@ -436,16 +436,19 @@ Si el parámetro existe devolver su valor
 
          
          
-        <script type='text/javascript'>
-          var _glc =_glc || []; 
-            _glc.push('all_ag9zfmNsaWNrZGVza2NoYXRyDwsSBXVzZXJzGLy9wNECDA');
-            var glcpath = (('https:' == document.location.protocol) ? 'https://my.clickdesk.com/clickdesk-ui/browser/' : 'http://my.clickdesk.com/clickdesk-ui/browser/');
-            var glcp = (('https:' == document.location.protocol) ? 'https://' : 'http://');
-            var glcspt = document.createElement('script'); glcspt.type = 'text/javascript'; 
-            glcspt.async = true; 
-            glcspt.src = glcpath + 'livechat-new.js';
-            var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(glcspt, s);
+        <!--Start of Tawk.to Script-->
+        <script type="text/javascript">
+        var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+        (function(){
+        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+        s1.async=true;
+        s1.src='https://embed.tawk.to/563ba0d0b2ea3bb025453289/default';
+        s1.charset='UTF-8';
+        s1.setAttribute('crossorigin','*');
+        s0.parentNode.insertBefore(s1,s0);
+        })();
         </script>
+        <!--End of Tawk.to Script-->
 
         <div id="ok"></div>
    </body>

@@ -33,13 +33,15 @@ class Basic
     protected function _getAdapter(array $config)
     {
         $authConfig = $config['auth_adapter'];
-        $authAdapter = new Zend\Authentication\Adapter\Http($authConfig['config']);
+        $authFile = CORE_DIRECTORY . DIRECTORY_SEPARATOR . $authConfig['basic_passwd_file'];
+
+        $resolver = new Zend\Authentication\Adapter\Http\FileResolver();
+        $resolver->setFile($authFile);
         
-        $basicResolver = new Zend\Authentication\Adapter\Http\ApacheResolver();
-        $basicResolver->setFile($authConfig['basic_passwd_file']);
-        $authAdapter->setBasicResolver($basicResolver);
+        $adapter = new Zend\Authentication\Adapter\Http($authConfig['config']);
+        $adapter->setBasicResolver($resolver);
         
-        return $authAdapter;
+        return $adapter;
     }
 
 
@@ -107,15 +109,16 @@ class Basic
         $authAdapter->setRequest($request);
         $authAdapter->setResponse($response);
         $result = $authAdapter->authenticate();
-        
+
         if($result->isValid())
         {
             $event->setResult($response);
         }
         else
         {
+            $msg = implode('. ', $result->getMessages());
             $response->setStatusCode(Zend\Http\Response::STATUS_CODE_401);
-            $response->setContent('Access denied');
+            $response->setContent("<strong>Access denied</strong><br> $msg");
             
             $event->setResult($response);
             

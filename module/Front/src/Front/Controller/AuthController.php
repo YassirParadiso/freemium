@@ -64,6 +64,7 @@ class AuthController extends Com\Controller\AbstractController
 
     function verifyAccountAction()
     {
+        set_time_limit(0);
         $params = new Zend\Stdlib\Parameters($this->params()->fromRoute());
         
         $sl = $this->getServiceLocator();

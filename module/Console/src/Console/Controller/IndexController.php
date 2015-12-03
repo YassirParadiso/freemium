@@ -103,9 +103,6 @@ class IndexController extends Com\Controller\AbstractController
             }
 
             //
-            $number = $config['freemium']['max_databases'];
-            
-            
             $dbClient = $sl->get('App\Db\Client');
             $dbDatabase = $sl->get('App\Db\Database');
             
@@ -127,6 +124,8 @@ class IndexController extends Com\Controller\AbstractController
             $msg = "-----------------------------------";
             $console->writeLine($msg, 11);
             
+            $number = $config['freemium']['max_databases'];
+            $number = 1;
             for($i=0; $i < $number; $i++)
             {
                 /*************************************/
@@ -211,22 +210,45 @@ class IndexController extends Com\Controller\AbstractController
                 /*******************************/
                 // RESTORING database
                 /*******************************/
-                $console->writeLine("Restoring data into $newDatabaseNamePrefixed", 11);
-                exec("mysql -u{$dbUser} -p{$dbPassword} $newDatabaseNamePrefixed < $masterSqlFile");
-                $console->writeLine("Restoration completed", 11);
+                $console->writeLine("Restoring tables into $newDatabaseNamePrefixed", 11);
+                $username = $config['freemium']['db']['user'];
+                $password = $config['freemium']['db']['password'];
+                $host = $config['freemium']['cpanel']['server'];
+                $dbName = $newDatabaseNamePrefixed;
+
+                $folder = $config['freemium']['path']['master_freemium_schema'];
+                
+                $adapter = $this->_getAdapter($dbName, $host, $username, $password);
+                
+                foreach(glob("$folder/*.sql") as $item)
+                {
+                    if(0 == filesize($item))
+                    {
+                        continue;
+                    }
+
+                    $console->writeLine("Restoring $item", 11);
+
+                    $sql = file_get_contents($item);
+                    $adapter->query($sql)->execute();
+                }
+
+                $console->writeLine("Restoration completed into $newDatabaseNamePrefixed", 11);
 
                 $msg = "-----------------------------------";
                 $console->writeLine($msg, 11);
+        
+
+                $this->_unlock(__method__);
+
+                $msg = "\nEnded at ".date('Y-m-d H:i:s')."";
+                $console->writeLine($msg, 11);
             }
-
-            $this->_unlock(__method__);
-
-            $msg = "\nEnded at ".date('Y-m-d H:i:s')."";
-            $console->writeLine($msg, 11);
         }
-        catch (RuntimeException $e)
+        catch (\Exception $e)
         {
             $this->_unlock(__method__);
+            $this->_notifyError($e);
         }
     }
 
@@ -553,5 +575,99 @@ class IndexController extends Com\Controller\AbstractController
                 'buffer_results' => true 
             ) 
         ));
+    }
+
+
+
+    protected function _notifyError($e)
+    {
+
+        $sl = $this->getServiceLocator();
+            
+        $config = $sl->get('config');
+
+        try
+        {
+            $message = '';
+            $file = '';
+            $line = '';
+
+            if($e instanceof \Exception)
+            {
+                $message = $e->getMessage();
+                $file = $e->getFile();
+                $line = $e->getLine();
+
+                $e = $e->getTraceAsString();
+            }
+                
+
+            $mailer = new Com\Mailer();
+        
+            // prepare the message to be send
+
+            $m = '';
+            $m .= "<p><strong>{$message}</strong></p>";
+            $m .= "File: {$file} ({$line})";
+            $m .= '<pre>';
+            $m .= $e;
+            $m .= '</pre>';
+            $message = $mailer->prepareMessage($m, null, 'Error grave al intentar crear bases de datos freemium');
+            
+            $mailTo = $config['freemium']['mail_to'];
+            foreach($mailTo as $mail)
+            {
+                $message->addTo($mail);
+            }
+
+            // prepare de mail transport and send the message
+            $transport = $mailer->getTransport($message, 'smtp1', 'sales');
+            $transport->send($message);
+        }
+        catch(\Exception $e)
+        {
+            echo $e->getMessage();
+            echo PHP_EOL;
+            echo $e->getTraceAsString();
+        }
+    }
+
+
+
+    function _getAdapter($database, $host = null, $username = null, $password = null)
+    {
+        $sl = $this->getServiceLocator();
+        $config = $sl->get('config');
+        
+        if(empty($username))
+        {
+            $username = $config['freemium']['cpanel']['username'];
+        }
+        
+        if(empty($password))
+        {
+            $password = $config['freemium']['cpanel']['password'];
+        }
+        
+        if(empty($host))
+        {
+            $host = $config['freemium']['cpanel']['server'];
+        }
+
+        // lest connect to the master database
+        $adapter = new Zend\Db\Adapter\Adapter(array(
+            'driver' => 'mysqli',
+            'database' => $database,
+            'username' => $username,
+            'password' => $password,
+            'hostname' => $host,
+            'profiler' => false,
+            'charset' => 'UTF8',
+            'options' => array(
+                'buffer_results' => true 
+            )
+        ));
+
+        return $adapter;
     }
 }

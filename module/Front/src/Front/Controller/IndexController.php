@@ -9,26 +9,32 @@ class IndexController extends Com\Controller\AbstractController
     function homeAction()
     {
         $request = $this->getRequest();
-        
         $sl = $this->getServiceLocator();
+
+        $cookie = $request->getCookie();
+        if(isset($cookie->lang))
+        {
+            $lang = $cookie->lang;
+        }
+        else
+        {
+            $lang = 'en';
+        }
         
         if($request->isPost())
         {
-            $post = array_merge_recursive($request->getPost()->toArray(), $request->getFiles()->toArray());
-            $params = new Zend\Stdlib\Parameters($post);
-            
-            #ini_set('display_errors', 1);
-            #error_reporting(E_ALL);
+            $params = $request->getPost();
+            $params->lang = $lang;
             
             $mInstance = $sl->get('App\Model\Freemium\Instance');
-            $flag = $mInstance->canReserve($params);
+            $flag = $mInstance->canCreateInstance($params);
             
             $com = $mInstance->getCommunicator();
             $this->assign($params);
             
             if($flag)
             {
-                $flag = $mInstance->doReserve($params);
+                $flag = $mInstance->doCreateAccount($params);
                 $com = $mInstance->getCommunicator();
                 $this->setCommunicator($com);
                 

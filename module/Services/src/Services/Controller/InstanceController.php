@@ -24,7 +24,7 @@ class InstanceController extends Com\Controller\AbstractController
                 'domain' => $instance
             );
 
-            $row = $dbClient->findBy($where)->current();
+            $row = $dbClient->findBy($where, array(), 'id asc')->current();
             if($row)
             {
                 $dueDate = null;
@@ -71,7 +71,7 @@ class InstanceController extends Com\Controller\AbstractController
 
 
     /**
-    * This method will sync a database for the given instance.
+    * This method will sync database for the given instance.
     * Sync means that the code will check if the database of the instance already have all required tables, if not then it will create
     *
     * ############# IMPORTANT #############
@@ -80,37 +80,48 @@ class InstanceController extends Com\Controller\AbstractController
     */
     function syncDatabaseAndNotifyAction()
     {
-        $this->basicAuthentication('webservices');
+        # $this->basicAuthentication('webservices');
         $sl = $this->getServiceLocator();
 
         set_time_limit(0);
 
         $config = $sl->get('config');
-        $clientId = $this->_params('client_id');
+        $domain = $this->_params('domain');
 
         try
         {
             $dbClient = $sl->get('App\Db\Client');
             $dbDatabase = $sl->get('App\Db\Database');
-            $rowClient = $dbClient->findByPrimarykey($clientId);
-            if(!$rowClient)
+
+            $clients = $dbClient->findBy(function($where) use($domain) {
+                $where->equalTo('domain', $domain);
+            }, array(), 'id asc');
+
+            // lest just find the first user of the domain
+            $client = $clients->current();
+
+            if(!$client)
             {
-                throw new \Exception("Client with ID $clientId not found");
+                throw new \Exception("Client with domain $domain not found");
             }
 
-            if($rowClient->deleted || $rowClient->email_verified)
+            if($client->deleted || $client->email_verified)
             {
-                throw new \Exception("Client with ID $clientId is deleted or is already verified ");
+                throw new \Exception("Client with domain $domain is deleted or is already verified ");
             }
 
-            $rowsetDatabase = $dbDatabase->findDatabaseByClientId($rowClient->id);
-            if(!$rowsetDatabase->count())
+            $databases = $dbDatabase->findDatabaseByClientId($client->id);
+            if(!$databases->count())
             {
-                throw new \Exception("No database assigned to the client");
+                throw new \Exception("No database assigned to the client {$client->id} with domain $domain");
             }
 
-            
 
+            /////////////////////////////////////////////
+            # sync databases
+            /////////////////////////////////////////////   
+
+            // get the list of tables from the path
             $pathSchema =  $config['freemium']['path']['master_freemium_schema'];
             $currentTables = array();
             foreach(glob("$pathSchema/*.sql") as $item)
@@ -120,16 +131,13 @@ class InstanceController extends Com\Controller\AbstractController
                 $currentTables[$tableName] = $item;
             }
             
-            foreach ($rowsetDatabase as $rowDatabase)
+            foreach ($databases as $database)
             {
                 $tablesToCreate = array();
                 $instanceTables = array();
-
-                /////////////////////////////////////////////
-                # sync databases
-                /////////////////////////////////////////////   
-                $database = $rowDatabase->db_name;
-                $instanceAdapter = $this->_getInstanceAdapter($database);
+                
+                $databaseName = $database->db_name;
+                $instanceAdapter = $this->_getInstanceAdapter($databaseName);
 
                 $sql = 'show tables';
                 $rowset = $instanceAdapter->query($sql)->execute();
@@ -150,19 +158,18 @@ class InstanceController extends Com\Controller\AbstractController
                 foreach ($tablesToCreate as $item)
                 {
                     $sql = file_get_contents($item);
-                    # $instanceAdapter->query($sql)->execute();
+                    $instanceAdapter->query($sql)->execute();
                 }
             }
 
             /////////////////////////////////////////////
             # send the confirmation email to the user
             /////////////////////////////////////////////
-
-            $lang = $rowClient->lang;
+            $lang = $client->lang;
 
             // prepare the verification code
             $cPassword = new Com\Crypt\Password();
-            $plain = $rowClient->email;
+            $plain = $client->email;
             $code = $cPassword->encode($plain);
 
             $request = $sl->get('request');
@@ -172,7 +179,7 @@ class InstanceController extends Com\Controller\AbstractController
             $routeParams = array();
             $routeParams['action'] = 'verify-account';
             $routeParams['code'] = $code;
-            $routeParams['email'] = $rowClient->email;
+            $routeParams['email'] = $client->email;
             
             $viewRenderer = $sl->get('ViewRenderer');
             $url = $serverUrl . $viewRenderer->url('auth/wildcard', $routeParams);
@@ -182,8 +189,8 @@ class InstanceController extends Com\Controller\AbstractController
             $data['follow_us'] = $this->_('follow_us');
             $data['body'] = $this->_('confirm_your_email_address_body', array(
                 $url,
-                $rowClient->email,
-                $rowClient->password 
+                $client->email,
+                $client->password 
             ));
             $data['header'] = '';
             
@@ -204,7 +211,7 @@ class InstanceController extends Com\Controller\AbstractController
             // prepare the message to be send
             $message = $mailer->prepareMessage($arr['body'], null, $this->_('confirm_your_email_address_subject'));
             
-            $message->setTo($rowClient->email);
+            $message->setTo($client->email);
             $mailTo = $config['freemium']['mail_to'];
             foreach($mailTo as $mail)
             {
