@@ -59,6 +59,9 @@ class IndexController extends Com\Controller\AbstractController
     function internalAction()
     {
         $request = $this->getRequest();
+        header('Location: /');
+        exit;
+
         
         $sl = $this->getServiceLocator();
         
