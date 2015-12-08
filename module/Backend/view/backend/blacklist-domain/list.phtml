@@ -1,0 +1,39 @@
+<?php
+$urlAdd = $this->url('backend/wildcard', array(
+    'controller' => 'blacklist-domain',
+    'action' => 'add',
+));
+
+$this->headScript()->appendFile($this->basePath('/js/colorbox/colorbox.js'));
+$this->headLink()->appendStylesheet($this->basePath('/js/colorbox/1/colorbox.css'));
+?>
+<div class="col-md-12">
+    <a class="iframe btn btn-primary" href="<?php echo $urlAdd?>">Add new</a>
+</div>
+<script>
+jQuery(function(){
+    $(".delete").click(function(e) {
+        var $self = $(this);
+        
+        var f = confirm("Please confirm that you want to delete the selected record.");
+        
+        if(!f)
+        {
+            e.preventDefault();
+        }
+    });
+
+    $(".iframe").click(function(e) {
+        var $self = $(this);
+        e.preventDefault();
+        
+        $.colorbox({
+            href: $self.attr("href")
+            ,iframe: true
+            ,width: 600
+            ,height: 250
+        });
+    });
+});
+
+</script>
