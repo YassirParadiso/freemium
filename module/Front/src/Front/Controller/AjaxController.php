@@ -172,10 +172,9 @@ class AjaxController extends Com\Controller\AbstractController
         $transport = $mailer->getTransport($message, 'smtp1', 'sales');
         $transport->send($message);
                     
-                    /*$arr=array('status'=>'ok', 'email'=>$request->getPost('email'));
-                    
-                    $result = new JsonModel($arr);
-    return $result;*/
+        $arr = array('status'=>'ok', 'email'=>$request->getPost('email'));
+        $result = new JsonModel($arr);
+        return $result;
     }
 
 }
