@@ -1,3 +1,11 @@
+
+<?php $this->headStyle()->captureStart(); ?>
+@media screen and (min-width: 768px)
+{
+    .col-md-12{width:768px;margin:0px auto;float:none;}
+}
+<?php $this->headStyle()->captureEnd(); ?>
+
 <div class="row">
     <div class="col-md-12" style="">
         Here's a simple guide on how to integrate your <a target="_blank" href="<?php echo $this->store_url?>">Shopify store</a> with your <a target="_blank" href="<?php echo $this->lms_url?>">Paradiso LMS</a> website.<br>
@@ -33,3 +41,24 @@
         - The customer should be able to login into Paradiso LMS platform and also get enrolled to the purchased course from Shopify.<br>
     </div>
 <div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+    $( ".contact-us" ).click(function() {
+        $( ".contactpopup" ).fadeIn(500);
+        $( ".contactpopup" ).addClass( "displayBlock" );
+           
+    });
+
+    $( ".close" ).click(function() {
+        $( ".contactpopup" ).fadeOut(500);
+        $( ".contactpopup" ).removeClass( "displayBlock" );     
+    });
+    
+    $('#contactpopupsubmit').click(function(event) {
+        event.preventDefault();
+    });
+    
+});
+</script>
