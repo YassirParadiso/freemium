@@ -291,6 +291,9 @@ class IndexController extends Com\Controller\AbstractController
                 'en', 'es'
             );
 
+            $time = time();
+            $today = date('Y-m-d', $time);
+
             foreach ($langs as $lang)
             {
                 $masterDatabase = $config['freemium']['master_instance'][$lang]['database'];
@@ -309,10 +312,7 @@ class IndexController extends Com\Controller\AbstractController
 
                 $sql = $dbClient->getSql();
                 $select = $sql->select();
-                $select->where(function($where) use($lang){
-                    $time = time();
-                    $today = date('Y-m-d', $time);
-
+                $select->where(function($where) use($today, $lang){
                     $where->equalTo('due_date', $today);
                     $where->equalTo('deleted', 0);
                     $where->equalTo('lang', $lang);
@@ -413,6 +413,91 @@ class IndexController extends Com\Controller\AbstractController
 
             $msg = "\nEnded at ".date('Y-m-d H:i:s') . "";
             $console->writeLine($msg, 11);
+        }
+        catch (RuntimeException $e)
+        {
+            $this->_notifyError($e);
+            $this->_unlock(__method__);
+        }
+
+        $this->_unlock(__method__);
+    }
+
+
+    function mdataSyncAction()
+    {
+        $request = $this->getRequest();
+
+        // Make sure that we are running in a console and the user has not tricked our
+        // application into running this action from a public web server.
+        if (!$request instanceof ConsoleRequest)
+        {
+            throw new \RuntimeException('You can only use this action from a console!');
+        }
+
+        try
+        {
+            $console = Console::getInstance();
+
+            if($this->_isLocked(__method__))
+            {
+                $msg = "Already running...";
+                $console->writeLine($msg, 10);
+                exit;
+            }
+            else
+            {
+                $this->_lock(__method__);
+                
+                $msg = "Started at ".date('Y-m-d H:i:s') . PHP_EOL;
+                $console->writeLine($msg, 11);
+            }
+
+            $sources = $config['freemium']['path']['mdata_source'];
+
+            $sl = $this->getServiceLocator();
+            $config = $sl->get('config');
+
+            foreach ($sources as $lang => $sourcePath)
+            {
+                $finalPath = $config['freemium']['path']['master_mdata'][$lang];
+                $tmpPath = '/home/paradisolms/mdata/mdata_tmp';
+
+                // create temp path
+                $command = "cp $sourcePath $tmpPath -r";
+                exec($command);
+                
+                // remove unwanted folders
+                $toRemove = array(
+                    "$tmpPath/cache/",
+                    "$tmpPath/localcache/",
+                    "$tmpPath/sessions/",
+                    "$tmpPath/temp/",
+                    "$tmpPath/trashdir/",
+                );
+
+                foreach ($toRemove as $pathToRemove)
+                {
+                    $command = "rm $pathToRemove -rf";
+                    exec($command);
+                }
+
+                // change chmod
+                $command = "chmod 777 $tmpPath/ -R";
+                exec($command);
+
+                // rename the existing final path so we can remove latter
+                $command = "mv $finalPath/ {$finalPath}_delete";
+                exec($command);
+
+                // rename the tmp path folder to the final path
+                $command = "mv $tmpPath $finalPath";
+                exec($command);
+
+                // remove the final renamed folder
+                $command = "rm {$finalPath}_delete/ -rf";
+                exec($command);
+            }
         }
         catch (RuntimeException $e)
         {

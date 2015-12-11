@@ -28,6 +28,7 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface, Co
             # 'remove-accounts' => 'Remove all deleted accounts older than 30 days',
             'run-cron' => 'Executes the cron of all instances',
             'disable-instances' => 'Disable overdue instances',
+            'mdata-sync' => 'Sync en and es madata folders',
          
             // Describe expected parameters
         );

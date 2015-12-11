@@ -45,6 +45,17 @@ return array(
                     ),
                 ),
 
+                'mdata-sync' => array(
+                    'options' => array(
+                        'route' => 'mdata-sync',
+                        'defaults' => array(
+                            '__NAMESPACE__' => 'Console\Controller',
+                            'controller' => 'Index',
+                            'action' => 'mdata-sync'
+                        ),
+                    ),
+                ),
+
                 
                 /*'remove-accounts' => array(
                     'options' => array(
