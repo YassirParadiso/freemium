@@ -143,6 +143,7 @@ class ShopifyController extends Com\Controller\AbstractController
                             }
                             catch(\Exception $e)
                             {
+                                \App\NotifyError::notify($e);
                                 $com->addError($e->getMessage(), 'instance');
                             }
                         }
@@ -317,6 +318,7 @@ class ShopifyController extends Com\Controller\AbstractController
             }
             catch(\Exception $e)
             {
+                \App\NotifyError::notify($e);
                 ddd($e);
             }
         }

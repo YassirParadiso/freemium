@@ -18,7 +18,7 @@ class Database extends Com\Db\AbstractDb
     *
     * @return int
     */
-    function countFree()
+    function countFree($lang = null)
     {
         $sl = $this->getServiceLocator();
        
@@ -39,10 +39,15 @@ class Database extends Com\Db\AbstractDb
         // join 
         $select->join(array('chd' => $dbClientHasDb->getTable()), 'chd.database_id = d.id', array(), 'left');
 
-        //
-        $predicate = new Zend\Db\Sql\Predicate\Literal('chd.client_id IS NULL');
-        $select->where($predicate);
-        
+        $select->where(function($where) use($lang) {
+            $where->isNull('chd.client_id');
+
+            if(!empty($lang))
+            {
+                $where->equalTo('lang', $lang);
+            }
+        });
+
         // $this->debugSql($select);
         
         //
@@ -54,7 +59,7 @@ class Database extends Com\Db\AbstractDb
     *
     * @return Com\Entity\Record | null
     */
-    function findFreeDatabase()
+    function findFreeDatabase($lang = null)
     {
         $sl = $this->getServiceLocator();
        
@@ -73,10 +78,17 @@ class Database extends Com\Db\AbstractDb
         $select->join(array('chd' => $dbClientHasDb->getTable()), 'chd.database_id = d.id', array(), 'LEFT');
 
         //
-        $predicate = new Zend\Db\Sql\Predicate\Literal('chd.client_id IS NULL');
-        $select->where($predicate);
+        $select->where(function($where) use($lang) {
+            $where->isNull('chd.client_id');
+
+            if(!empty($lang))
+            {
+                $where->equalTo('lang', $lang);
+            }
+        });
+
         $select->order('d.id ASC');
-        
+
         //
         $select->limit(1);
         

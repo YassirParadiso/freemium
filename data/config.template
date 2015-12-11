@@ -8,4 +8,4 @@ $CFG->dbpass    = "{$dbPassword}";
 
 $CFG->wwwroot   = "https://{$domain}";
 $CFG->dataroot  = "{$dataPath}";
-
+$CFG->docroot = 'https://docs.paradisolms.net';

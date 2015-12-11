@@ -8,52 +8,6 @@ class AjaxController extends Com\Controller\AbstractController
 {
 
    
-    function checkInstanceCreatedAction()
-    {
-        $request = $this->getRequest();
-        
-        $com = $this->getCommunicator();
-        $com->setNoSuccess();
-      
-        if($request->isPost())
-        {
-            $uri = $request->getPost('website');
-            #$uri = 'http://paradisosolutions7824008.paradisolms.com';
-            
-            $client = new Zend\Http\Client();
-            $client->setUri($uri);
-            
-            try
-            {
-                $response = $client->send();
-                
-                if($response->isOk())
-                {
-                    // analizamos el cuerpo de la pagina para buscar si esta intentando redireccionar
-                    // a la pagina por defecto de cpanel
-                    $body = $response->getBody();
-                    if(false === stripos($body, '/cgi-sys/defaultwebpage.cgi'))
-                    {
-                        $com->setSuccess();
-                    }
-                    elseif(false === stripos($body, '<!-- /freemium -->'))
-                    {
-                        $com->setSuccess();
-                    }
-                }
-            }
-            catch(\Exception $e)
-            {
-                ;
-            }
-        }
-        
-        $result = new JsonModel($com->toArray());
-
-        return $result;
-    }
-    
-    
     function validateEmailAction()
     {
         $request = $this->getRequest();
@@ -119,30 +73,6 @@ class AjaxController extends Com\Controller\AbstractController
     }
     
     
-    function canEditInstanceAction()
-    {
-        $request = $this->getRequest();
-        
-        $com = $this->getCommunicator();
-        $com->setNoSuccess();
-      
-        if($request->isPost())
-        {
-            $email = $request->getPost('email');
-            $sl = $this->getServiceLocator();
-            
-            $mInstance = $sl->get('App\Model\Freemium\Instance');
-            if($mInstance->canEditInstanceName($email))
-            {
-                $com->setSuccess();
-            }
-        }
-        
-        $result = new JsonModel($com->toArray());
-
-        return $result;
-    }
-
     function sendcontactAction()
     {
         $sl = $this->getServiceLocator();
@@ -156,8 +86,8 @@ class AjaxController extends Com\Controller\AbstractController
                         
         $mailer = new Com\Mailer();
         
-        $html_msg='Este es un mensaje que ha sido enviado del formulario de freemium con la siguiente información:<br/>Name:'.$name.
-        '<br/>Email: '.$email.'<br/>Company:'.$company.'<br/>Phone:'.$phone.'<br/>Message:'.$msg;
+        $html_msg='Este es un mensaje que ha sido enviado del formulario de freemium con la siguiente información:<br/>Name: '.$name.
+        '<br/>Email: '.$email.'<br/>Company: '.$company.'<br/>Phone: '.$phone.'<br/>Message: '.$msg;
         
         $message = $mailer->prepareMessage($html_msg, null, 'Contacto Freemium');
 

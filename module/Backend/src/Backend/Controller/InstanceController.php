@@ -27,6 +27,7 @@ class InstanceController extends Com\Controller\BackendController
         return $view;
     }
 
+
     function setDueDateAction()
     {
         $this->layout('layout/blank');
@@ -124,25 +125,6 @@ class InstanceController extends Com\Controller\BackendController
     }
     
     
-    
-    function approvalPendingAction()
-    {
-        $sl = $this->getServiceLocator();
-        
-        $this->loadCommunicator();
-
-        $grid = new App\DataGrid\Approval($sl, $this->viewVars);
-        $view = $grid->render();                
-        
-        $colorBoxView = new Zend\View\Model\ViewModel();
-        $colorBoxView->setTemplate('backend/instance/approval-pending.phtml');
-        
-        $view->addChild($colorBoxView, 'after_title');
-        
-        return $view;
-    }
-
-    
     function deleteFreeDbAction()
     {
     	$sl = $this->getServiceLocator();
@@ -155,49 +137,6 @@ class InstanceController extends Com\Controller\BackendController
     	
     }
     
-    
-    function approveAction()
-    {
-        $sl = $this->getServiceLocator();
-        $request = $this->getRequest();
-        try
-        {
-            $ids = array();
-            
-            if($request->isPost())
-            {
-                $ids = (array)$request->getPost('item');
-            }
-            else
-            {
-                $ids[] = $this->_params('id', 0);
-            }
-            
-            $mInstance = $sl->get('App\Model\Freemium\Instance');
-            
-            $mInstance->doApprove($ids);
-            $com = $mInstance->getCommunicator();
-            
-            if($com->isSuccess())
-            {
-                $isError = false;
-                $message = 'Account successfull approved';
-            }
-            else
-            {
-                $isError = true;
-                $errors = $com->getGlobalErrors();
-                $message = $errors[0];
-            }
-            
-            return $this->_redirectToListWithMessage($message, $isError, 'approval-pending');
-        }
-        catch (\Exception $e)
-        {
-            $errorMessage = $e->getMessage();
-            return $this->_redirectToListWithMessage($errorMessage, true, 'approval-pending');
-        }
-    }
     
     
     function deleteAction()
@@ -269,12 +208,6 @@ class InstanceController extends Com\Controller\BackendController
                         );
                         
                         $dbClient->doUpdate($data, $where);
-                        
-                        if($row->logo)
-                        {
-                            @unlink($row->logo);
-                        }
-                        
                         $count++;
                     }
                 
@@ -302,9 +235,7 @@ class InstanceController extends Com\Controller\BackendController
             $dbDatabase = $sl->get('App\Db\Database');
             $dbClientDatabase = $sl->get('App\Db\Client\HasDatabase');
             
-            $topDomain = $config['freemium']['top_domain'];
             $mDataPath = $config['freemium']['path']['mdata'];
-            $masterSqlFile = $config['freemium']['path']['master_sql_file'];
             $configPath = $config['freemium']['path']['config'];
             
             $cpanelUser = $config['freemium']['cpanel']['username'];
@@ -342,35 +273,6 @@ class InstanceController extends Com\Controller\BackendController
                     $rowDatabase = $rowsetDatabase->current();
                     $dbName = $rowDatabase->db_name;
                     $dbNameNoPrefix = str_replace($dbPrefix, '', $dbName);
-                    
-                    
-
-                    /*************************************/
-                    // delete the database
-                    /*************************************/
-                    /*
-                    $response = $cp->api2_query($cpanelUser, 'MysqlFE', 'deletedb', array(
-                        'db' => $dbName,
-                    ));
-                    
-                    if(isset($response['error']) || isset($response['event']['error']))
-                    {
-                        $errorMessage = isset($response['error']) ? $response['error'] : $response['event']['error'];
-                        return $this->_redirectToListWithMessage($errorMessage, true);
-                    }
-                    */
-                    
-                    // delete database from database database ;-)
-                    /*
-                    $where = array();
-                    $where['id = ?'] = $rowDatabase->id;
-                    $dbDatabase->doDelete($where);
-                    
-                    //
-                    $where = array();
-                    $where['database_id = ?'] = $rowDatabase->id;
-                    $dbClientDatabase->doDelete($where);
-                    */
                 }
                 
                 // update client email and domain 
@@ -387,7 +289,7 @@ class InstanceController extends Com\Controller\BackendController
             }
             
             /*************************************/
-            // delete the domain
+            // unpark the domain
             /*************************************/
             $response = $cp->unpark($cpanelUser, $domain);
                 
@@ -399,14 +301,14 @@ class InstanceController extends Com\Controller\BackendController
             
             
             /*************************************/
-            // delete mdata folder
+            // rename mdata folder
             /*************************************/
             #exec("rm {$mDataPath}/$domain/ -Rf");
             exec("mv {$mDataPath}/$domain/ {$mDataPath}/$domain.deleted");
             
             
             /*************************************/
-            // delete config file
+            // rename config file
             /*************************************/
             $configFilename = "{$configPath}/{$domain}.php";
             #exec("rm $configFilename");

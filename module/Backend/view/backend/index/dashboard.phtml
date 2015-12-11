@@ -11,17 +11,33 @@ $userId = $this->GlobalVars('identity.id', 0);
             <li><a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'list')); ?>">Instances</a></li>
             <li><a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'add-instance')); ?>">Add Instance</a></li>
             <li><a href="<?php echo $this->url('backend', array('controller' => 'BlacklistDomain', 'action' => 'list')); ?>">Blacklist Domain</a></li>
-            <li><a target="_blank" href="<?php echo $this->url('backend', array('controller' => 'sql', 'action' => 'dump-database')); ?>">Dump master database</a></li>
-            <!--li>
-                <a onclick="return _confirm()" href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'delete-free-db')); ?>">Delete free databases</a>
-            </li-->
+            <li>
+                <a class="dump-database btn btn-default btn-xs" class="btn btn-default btn-xs" target="_blank" href="">Dump master database</a>
+                <select id="instance_lang">
+                    <option value="">Please choose a value</option>
+                    <option value="en">trial.paradisolms.com</option>
+                    <option value="es">master.es.paradisolms.net</option>
+                </select>
+            </li>
         </ul>
     </div>
 </div>
 
 <script>
-function _confirm()
-{
-	return confirm("Please confirm that you want to delete ALL free databases.\n This action can't be undone.");
-}
+jQuery(function(){
+    $(".dump-database").click(function(e){
+        var lang = $("#instance_lang").val()
+        if(lang == "")
+        {
+            alert("Please choose an instance from the dropdown");
+            e.preventDefault();
+        }
+
+        var url = "<?php echo $this->url('backend', array('controller' => 'sql', 'action' => 'dump-database')); ?>";
+        url += "/lang/" + lang;
+
+        $(this).attr("href", url);
+    });
+});
+
 </script>

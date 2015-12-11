@@ -43,7 +43,7 @@ class Instance extends Com\Model\AbstractModel
             'email',
             'first_name',
             'last_name',
-            'lang' 
+            'lang'
         );
         
         $this->hasEmptyValues($fields, $params);
@@ -61,6 +61,7 @@ class Instance extends Com\Model\AbstractModel
                 $config = $sl->get('config');
                 
                 $email = strtolower($params->email);
+                $lang = $params->lang;
                 
                 // check if the email field looks like a real email address
                 $vEmail = new Zend\Validator\EmailAddress();
@@ -107,7 +108,7 @@ class Instance extends Com\Model\AbstractModel
                 // check if the user can provide a custom instance name
                 // Have in mind that paradiso people can provide instance names
                 $topDomain = $config['freemium']['top_domain'];
-                $domain = "{$instance}.$topDomain";
+                $domain = "$instance.$lang.$topDomain";
                 
                 // check if the domain name is good
                 if(! $this->_isValidDomainName($domain))
@@ -116,7 +117,7 @@ class Instance extends Com\Model\AbstractModel
                 }
                 
                 // find a free database
-                $rowDb = $dbDatabase->findFreeDatabase();
+                $rowDb = $dbDatabase->findFreeDatabase($lang);
                 // ups, no free database found
                 if(! $rowDb)
                 {
@@ -128,6 +129,7 @@ class Instance extends Com\Model\AbstractModel
             catch(\Exception $e)
             {
                 $this->setException($e);
+                \App\NotifyError::notify($e);
             }
         }
         
@@ -206,7 +208,7 @@ class Instance extends Com\Model\AbstractModel
             $clientId = $dbClient->getLastInsertValue();
 
             // assign database
-            $db = $dbDatabase->findFreeDatabase();
+            $db = $dbDatabase->findFreeDatabase($lang);
             $data = array(
                 'client_id' => $clientId
                 ,'database_id' => $db->id
@@ -236,6 +238,7 @@ class Instance extends Com\Model\AbstractModel
         catch(\Exception $e)
         {
             $this->setException($e);
+            \App\NotifyError::notify($e);
         }
 
         return $this->isSuccess();
@@ -313,9 +316,10 @@ class Instance extends Com\Model\AbstractModel
                 return false;
             }
 
+            $lang = $client->lang;
 
             $config = $sl->get('config');
-            $mDataMasterPath = $config['freemium']['path']['master_mdata'];
+            $mDataMasterPath = $config['freemium']['path']['master_mdata'][$lang];
             $mDataPath = $config['freemium']['path']['mdata'];
             $configPath = $config['freemium']['path']['config'];
             $cpanelUser = $config['freemium']['cpanel']['username'];
@@ -337,8 +341,6 @@ class Instance extends Com\Model\AbstractModel
             // Changing owner for the data folder
             exec("chown -R {$cpanelUser}:{$cpanelUser} {$mDataPath}/{$client->domain} -R");
             exec("chmod 777 {$mDataPath}/{$client->domain} -R");
-
-
 
             // creating config file
             $database = $databases->current();
@@ -363,8 +365,7 @@ class Instance extends Com\Model\AbstractModel
             // database
             foreach ($databases as $database)
             {
-                $dbName = $database->db_name;
-                $this->_restoreData($dbName);
+                $this->_restoreData($database, $lang);
             }
 
             
@@ -387,7 +388,7 @@ class Instance extends Com\Model\AbstractModel
 
             foreach ($databases as $database)
             {
-                $instanceAdapter = $this->_getAdapter($database->db_name);
+                $instanceAdapter = $this->_getAdapter($database->db_name, $database->db_host, $database->db_user, $database->db_password);
 
                 $sql = "
                 UPDATE mdl_user SET 
@@ -436,6 +437,7 @@ class Instance extends Com\Model\AbstractModel
         catch(\Exception $e)
         {
             $this->setException($e);
+            \App\NotifyError::notify($e);
         }
         
         return $this->isSuccess();
@@ -482,21 +484,20 @@ class Instance extends Com\Model\AbstractModel
 
 
 
-    protected function _restoreData($dbName)
+    protected function _restoreData($database, $lang)
     {
         $sl = $this->getServiceLocator();
         $config = $sl->get('config');
         
-        $username = $config['freemium']['db']['user'];
-        $password = $config['freemium']['db']['password'];
-        $host = $config['freemium']['cpanel']['server'];
+        $dbName = $database->db_name;
+        
+        $username = $database->db_user;
+        $password = $database->db_password;
+        $host = $database->db_host;
 
-        #$db = new \PDO("mysql:host={$host};dbname=$dbName;charset=utf8", $username, $password);
-        #mysql_connect($host, $username, $password);
         $cnn = mysqli_connect($host, $username, $password, $dbName);
-        #mysql_select_db($dbName);
 
-        $folder = $config['freemium']['path']['master_freemium_data'];
+        $folder = $config['freemium']['path']['master_freemium_data'][$lang];
 
         foreach(glob("$folder/*.sql") as $item)
         {
@@ -508,14 +509,7 @@ class Instance extends Com\Model\AbstractModel
             $info = pathinfo($item);
             $tableName = str_replace('.sql', '', $info['basename']);
 
-
-            $sql = <<<xxx
-
-LOAD DATA LOCAL INFILE '$item' 
-INTO TABLE `$tableName`
-
-xxx;
-
+            $sql = "LOAD DATA LOCAL INFILE '$item' INTO TABLE `$tableName`";
             mysqli_query($cnn, $sql);
         }
     }

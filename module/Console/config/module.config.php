@@ -46,8 +46,7 @@ return array(
                 ),
 
                 
-                
-                'remove-accounts' => array(
+                /*'remove-accounts' => array(
                     'options' => array(
                         'route' => 'remove-accounts',
                         'defaults' => array(
@@ -56,7 +55,7 @@ return array(
                             'action' => 'remove-accounts'
                         ),
                     ),
-                ),
+                ),*/
             )
         )
     ),

@@ -1,7 +1,7 @@
 <?php
 namespace Services\Controller;
 
-use Zend, Com, Zend\View\Model\JsonModel;
+use Zend, Com, App, Zend\View\Model\JsonModel;
  
 
 class InstanceController extends Com\Controller\AbstractController
@@ -12,60 +12,67 @@ class InstanceController extends Com\Controller\AbstractController
     {
         $this->layout('layout/blank');
 
-        $sl = $this->getServiceLocator();
-        $com = $this->getCommunicator();
-        $instance = $this->_params('instance');
-
-        if($instance)
+        try
         {
-            $dbClient = $sl->get('App\Db\Client');
-            $where = array(
-                'domain' => $instance
-            );
+            $sl = $this->getServiceLocator();
+            $com = $this->getCommunicator();
+            $instance = $this->_params('instance');
 
-            $row = $dbClient->findBy($where, array(), 'id asc')->current();
-            if($row)
+            if($instance)
             {
-                $dueDate = null;
-                $difference = null;
-                $dueOn = null;
-                if($row->due_date)
-                {
-                    
-                    $dueDate = $row->due_date;
-                    $time = strtotime($dueDate);
-                    $dueOn = date('M d, Y', $time);
-                    $date = date('M d, Y', $time);
-                    $today = date('Y-m-d');
-
-                    $datetime1 = new \DateTime($row->due_date);
-                    $datetime2 = new \DateTime($today);
-                    $interval = $datetime2->diff($datetime1);
-                    $difference = (int)$interval->format('%R%a');
-                }
-
-                $data = array(
-                    'due_date' => $dueDate
-                    ,'due_on' => $dueOn
-                    ,'due_days' => $difference
+                $dbClient = $sl->get('App\Db\Client');
+                $where = array(
+                    'domain' => $instance
                 );
 
-                $com->setData($data);
+                $row = $dbClient->findBy($where, array(), 'id asc')->current();
+                if($row)
+                {
+                    $dueDate = null;
+                    $difference = null;
+                    $dueOn = null;
+                    if($row->due_date)
+                    {
+                        
+                        $dueDate = $row->due_date;
+                        $time = strtotime($dueDate);
+                        $dueOn = date('M d, Y', $time);
+                        $date = date('M d, Y', $time);
+                        $today = date('Y-m-d');
+
+                        $datetime1 = new \DateTime($row->due_date);
+                        $datetime2 = new \DateTime($today);
+                        $interval = $datetime2->diff($datetime1);
+                        $difference = (int)$interval->format('%R%a');
+                    }
+
+                    $data = array(
+                        'due_date' => $dueDate
+                        ,'due_on' => $dueOn
+                        ,'due_days' => $difference
+                    );
+
+                    $com->setData($data);
+                }
+                else
+                {
+                    $com->addError('Instance not found');
+                }
             }
             else
             {
-                $com->addError('Instance not found');
+                $com->addError('Missing instance name');
             }
-        }
-        else
-        {
-            $com->addError('Missing instance name');
-        }
-        
-        $json = $com->toArray();
+            
+            $json = $com->toArray();
 
-        $result = new Zend\View\Model\JsonModel($json);
-        return $result;
+            $result = new Zend\View\Model\JsonModel($json);
+            return $result;
+        }
+        catch(\Exception $e)
+        {
+            \App\NotifyError::notify($e);
+        }
     }
 
 
@@ -116,12 +123,13 @@ class InstanceController extends Com\Controller\AbstractController
             }
 
 
+            $lang = $client->lang;
             /////////////////////////////////////////////
             # sync databases
             /////////////////////////////////////////////   
 
             // get the list of tables from the path
-            $pathSchema =  $config['freemium']['path']['master_freemium_schema'];
+            $pathSchema =  $config['freemium']['path']['master_freemium_schema'][$lang];
             $currentTables = array();
             foreach(glob("$pathSchema/*.sql") as $item)
             {
@@ -164,7 +172,6 @@ class InstanceController extends Com\Controller\AbstractController
             /////////////////////////////////////////////
             # send the confirmation email to the user
             /////////////////////////////////////////////
-            $lang = $client->lang;
 
             // prepare the verification code
             $cPassword = new Com\Crypt\Password();
@@ -224,35 +231,7 @@ class InstanceController extends Com\Controller\AbstractController
         }
         catch(\Exception $e)
         {
-            try
-            {
-                $mailer = new Com\Mailer();
-            
-                // prepare the message to be send
-
-                $m = '';
-                $m .= "<p><strong>{$e->getMessage()}</strong></p>";
-                $m .= "File: {$e->getFile()} ({$e->getLine()})";
-                $m .= '<pre>';
-                $m .= $e->getTraceAsString();
-                $m .= '</pre>';
-                $message = $mailer->prepareMessage($m, null, 'Error grave al intentar sincronizar base de datos freemium');
-                
-                $mailTo = $config['freemium']['mail_to'];
-                foreach($mailTo as $mail)
-                {
-                    $message->addTo($mail);
-                }
-
-                // prepare de mail transport and send the message
-                $transport = $mailer->getTransport($message, 'smtp1', 'sales');
-                $transport->send($message);
-            }
-            catch(\Exception $e2)
-            {
-                ddd($e2);
-            }
-
+            \App\NotifyError::notify($e);
             ddd($e);
         }
 

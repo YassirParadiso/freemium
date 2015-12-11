@@ -265,7 +265,26 @@ xxx;
         
         try
         {
-            // first lets cerate the folder to dump the data
+            $lang = $this->params()->fromRoute('lang');
+
+            if(!$lang)
+            {
+                exit("Ups, it looks like you have not selected an instance.");
+            }
+
+            if(!isset($config['freemium']['master_instance'][$lang]))
+            {
+                exit("Ups, unable to find configuration for the given instance.");
+            }
+
+            $masterInstance = $config['freemium']['master_instance'][$lang];
+
+            $masterDatabase = $masterInstance['database'];
+            $masterHost = $masterInstance['host'];
+            $masterUser = $masterInstance['user'];
+            $masterPassword = $masterInstance['password'];
+
+            // first lets create the folder to dump the data
             $unique = uniqid();
             $newUmask = 0777;
             $oldUmask = umask($newUmask);
@@ -292,14 +311,8 @@ xxx;
                 }
             }
 
-            $masterDatabase = $config['freemium']['master_instance']['database'];
-            $masterHost = $config['freemium']['master_instance']['host'];
-            $masterUser = $config['freemium']['master_instance']['user'];
-            $masterPassword = $config['freemium']['master_instance']['password'];
-
             // lest connect to the master database
             $adapter = $this->_getAdapter($masterDatabase, $masterHost, $masterUser, $masterPassword);
-            $adapter2 = $this->_getAdapter($masterDatabase);
 
             // get all tables
             $sql = "show tables";
@@ -314,9 +327,9 @@ xxx;
                 $sql = "show create table `$tableName`";
                 $result = $adapter->query($sql)->execute()->current();
                 $statement = end($result);
-
                 $statement = preg_replace('/AUTO_INCREMENT=\d+ /', '', $statement);
 
+                //
                 $path = "{$folders['schema']}/{$tableName}.sql";
                 file_put_contents($path, $statement);
                 chmod($path, $newUmask);
@@ -324,20 +337,9 @@ xxx;
                 // export data
                 $path = "{$folders['data']}/{$tableName}.sql";
 
-                $sql = <<<xxx
-                SELECT * INTO OUTFILE '$path'
-                FROM `$tableName`
-xxx;
-               
-                $adapter2->query($sql)->execute();
+                $sql = "SELECT * INTO OUTFILE '$path' FROM `$tableName`";
+                $adapter->query($sql)->execute();
             }
-
-            # echo "<a target='_blank' href='/backend/sql/delete-tables/folder/$unique'>Delete tables</a> - $unique";
-            # echo "<br>";
-            # echo "<a target='_blank' href='/backend/sql/create-tables/folder/$unique'>Create tables</a> - $unique";
-            # echo "<br>";
-            # echo "<a target='_blank' href='/backend/sql/restore-data/folder/$unique'>Restore data</a> - $unique";
-            # exit;
 
             if($rowset->count())
             {
@@ -355,8 +357,8 @@ xxx;
                 $response->setStream(fopen("{$uniquePath}.zip", 'r'));
                 $response->setStatusCode(200);
 
-                $date = date('Y-m-d_H.i.s');
-                $fileName = "master.{$date}.sql.zip";
+                $date = date('Y.m.d_H.i.s');
+                $fileName = "database_{$lang}_{$date}.sql.zip";
                 $headers = new \Zend\Http\Headers();
                 $headers->addHeaderLine('Content-Type', 'whatever your content type is')
                     ->addHeaderLine('Content-Disposition', 'attachment; filename="' . $fileName . '"')
