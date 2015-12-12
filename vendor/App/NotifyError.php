@@ -40,16 +40,16 @@ class NotifyError
             $message = $mailer->prepareMessage($error, null, $subject);
             foreach($emails as $mail)
             {
-                $message->addTo($client->email);
+                $message->addTo($mail);
             }
 
             // prepare de mail transport and send the message
-            $transport = $mailer->getTransport($message, 'smtp1', 'sales');
+            $transport = $mailer->getTransport($message, 'smtp1', 'dev');
             $transport->send($message);
         }
         catch(\Exception $e)
         {
-            ;
+            ddd($e);
         }
     }
 }

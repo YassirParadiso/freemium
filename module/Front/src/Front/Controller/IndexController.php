@@ -27,6 +27,9 @@ class IndexController extends Com\Controller\AbstractController
             $params->lang = $lang;
             
             $mInstance = $sl->get('App\Model\Freemium\Instance');
+
+            $params->created_from = 'form';
+
             $flag = $mInstance->canCreateInstance($params);
             
             $com = $mInstance->getCommunicator();

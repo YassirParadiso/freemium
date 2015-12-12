@@ -4,16 +4,16 @@ namespace App\Model;
 use Com, Zend;
 use Zend\Form\Element\Email;
 
-class BlacklistDomain extends Com\Model\AbstractModel
+class BlacklistPhrase extends Com\Model\AbstractModel
 {
 
     function canSave(Zend\Stdlib\Parameters $params)
     {
         $fields = array(
-            'domain',
+            'phrase',
         );
 
-        $params->domain = trim($params->domain);
+        $params->phrase = trim($params->phrase);
         
         if($this->hasEmptyValues($fields, $params))
         {
@@ -24,13 +24,13 @@ class BlacklistDomain extends Com\Model\AbstractModel
 
         try
         {
-            $dbBlacklistDomain = $sl->get('App\Db\BlacklistDomain');
+            $dbBlacklistPhrase = $sl->get('App\Db\BlacklistPhrase');
 
-            $domain = $params->domain;
+            $phrase = $params->phrase;
             $id = $params->id;
 
-            $count = $dbBlacklistDomain->count(function($where) use($domain, $id) {
-                $where->equalTo('domain', $domain);
+            $count = $dbBlacklistPhrase->count(function($where) use($phrase, $id) {
+                $where->equalTo('phrase', $phrase);
                 if($id)
                 {
                     $where->notEqualTo('id', $id);
@@ -39,7 +39,7 @@ class BlacklistDomain extends Com\Model\AbstractModel
 
             if($count)
             {
-                $this->getCommunicator()->addError('Domain name already exists', 'domain');
+                $this->getCommunicator()->addError('Phrase already exists', 'phrase');
                 return false;
             }
         }
@@ -58,10 +58,10 @@ class BlacklistDomain extends Com\Model\AbstractModel
 
         try
         {
-            $dbBlacklistDomain = $sl->get('App\Db\BlacklistDomain');
+            $dbBlacklistPhrase = $sl->get('App\Db\BlacklistPhrase');
 
             $data = array(
-                'domain' => trim($params->domain)
+                'phrase' => trim($params->phrase)
             );
 
             if($params->id)
@@ -71,14 +71,14 @@ class BlacklistDomain extends Com\Model\AbstractModel
                     'id = ?' => $params->id
                 );
 
-                $dbBlacklistDomain->doUpdate($data, $where);
+                $dbBlacklistPhrase->doUpdate($data, $where);
             }
             else
             {
-                $dbBlacklistDomain->doInsert($data);
+                $dbBlacklistPhrase->doInsert($data);
             }
 
-            $this->getCommunicator()->setSuccess('Domain name added');
+            $this->getCommunicator()->setSuccess('Phrase added');
             
         }
         catch(\Exception $e)

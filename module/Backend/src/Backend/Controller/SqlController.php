@@ -257,7 +257,7 @@ xxx;
         ########### IMPORTANT ########### 
         ########### ########### ########### 
         # make sure you have granted FILE to user
-        # GRANT FILE ON *.* TO 'user'@'%';
+        # GRANT FILE ON *.* TO '$user'@'%';
         ########### ########### ########### 
         ########### ########### ########### 
         $sl = $this->getServiceLocator();

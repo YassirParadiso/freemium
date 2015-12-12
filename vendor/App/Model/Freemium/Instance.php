@@ -94,16 +94,20 @@ class Instance extends Com\Model\AbstractModel
                     return false;
                 }
                 
-                
-                // check if the domain of the email is allowed to create account
-                $emailDomain = $exploded[1];
-                if($dbBlacklistDomain->count(function($where) use($emailDomain) {
-                    $where->equalTo('domain', $emailDomain);
-                }))
+
+                if('backend' != $params->created_from)
                 {
-                    $this->getCommunicator()->addError($this->_('email_address_not_allowed'), 'email');
-                    return false;
+                    // check if the domain of the email is allowed to create account
+                    $emailDomain = $exploded[1];
+                    if($dbBlacklistDomain->count(function($where) use($emailDomain) {
+                        $where->equalTo('domain', $emailDomain);
+                    }))
+                    {
+                        $this->getCommunicator()->addError($this->_('email_address_not_allowed'), 'email');
+                        return false;
+                    }
                 }
+                
                 
                 // check if the user can provide a custom instance name
                 // Have in mind that paradiso people can provide instance names
@@ -122,6 +126,18 @@ class Instance extends Com\Model\AbstractModel
                 if(! $rowDb)
                 {
                     $this->getCommunicator()->addError($this->_('unexpected_error'));
+
+                    $message = "Tried to create an instance but there are no databases available to assign<br><br>";
+
+                    $message .= "<strong>User information:</strong> <br>";
+                    $message .= "<strong>Email:</strong> {$params->email} <br>";
+                    $message .= "<strong>First name:</strong> {$params->first_name} <br>";
+                    $message .= "<strong>Last name:</strong> {$params->last_name} <br>";
+                    $message .= "<strong>lang:</strong> {$params->lang} <br>";
+                    $message .= "<strong>Password:</strong> {$params->password} <br>";
+                     
+                    \App\NotifyError::notify($message);
+
                     $this->_createDatabasesScript();
                     return false;
                 }
@@ -154,6 +170,19 @@ class Instance extends Com\Model\AbstractModel
 
         try
         {
+
+            $validValues = array(
+                'form', 'backend'
+            );
+
+            if(array_search($params->created_from, $validValues))
+            {
+                $m = "Invalid value for created_from property:";
+                $m .= print_r($params->toArray(), 1);
+
+                throw new \Exception($m);
+            }
+
             $dbClient = $sl->get('App\Db\Client');
             $dbClientDatabase = $sl->get('App\Db\Client\HasDatabase');
             $dbDatabase = $sl->get('App\Db\Database');
@@ -197,7 +226,16 @@ class Instance extends Com\Model\AbstractModel
             $data['logo'] = '';
             $data['lang'] = $lang;
             $data['due_date'] = null;
+            $data['created_from'] = $params->created_from;
+            
 
+            $identity = $this->getUserIdentity();
+            if($identity)
+            {
+                $data['created_by'] = $identity['id'];
+                $data['approved_by'] = $identity['id'];
+            }
+            
             if($params->password)
             {
                 $data['password'] = $params->password;

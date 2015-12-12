@@ -96,6 +96,12 @@ class InstanceController extends Com\Controller\AbstractController
 
         try
         {
+            if(empty($domain))
+            {
+                throw new \Exception("Invalid call to the webservice. No domain name provided");
+            }
+
+
             $dbClient = $sl->get('App\Db\Client');
             $dbDatabase = $sl->get('App\Db\Database');
 
@@ -108,19 +114,32 @@ class InstanceController extends Com\Controller\AbstractController
 
             if(!$client)
             {
-                throw new \Exception("Client with domain $domain not found");
+                throw new \Exception("Client with domain $domain not found.");
             }
 
-            if($client->deleted || $client->email_verified)
+            if($client->deleted)
             {
-                throw new \Exception("Client with domain $domain is deleted or is already verified ");
+                throw new \Exception("Client #{$client->id} with domain $domain is deleted. The confirmation email was not send.");
+            }
+
+            if($client->email_verified)
+            {
+                throw new \Exception("Client #{$client->id} with domain $domain is already verified. The confirmation email was not send.");
             }
 
             $databases = $dbDatabase->findDatabaseByClientId($client->id);
             if(!$databases->count())
             {
-                throw new \Exception("No database assigned to the client {$client->id} with domain $domain");
+                throw new \Exception("No database assigned to client #{$client->id} with domain $domain. The confirmation email was not send.");
             }
+
+
+            //
+            if('backend' != $client->created_from)
+            {
+                ;
+            }
+
 
 
             $lang = $client->lang;
