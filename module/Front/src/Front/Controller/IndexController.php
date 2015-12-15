@@ -30,7 +30,7 @@ class IndexController extends Com\Controller\AbstractController
 
             $params->created_from = 'form';
 
-            $flag = 1;#$mInstance->canCreateInstance($params);
+            $flag = $mInstance->canCreateInstance($params);
             
             $com = $mInstance->getCommunicator();
             $this->assign($params);

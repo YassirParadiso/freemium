@@ -214,8 +214,6 @@ class InstanceController extends Com\Controller\AbstractController
             $data['follow_us'] = $this->_('follow_us', array(), 'default', $lang);
             $data['body'] = $this->_('confirm_your_email_address_body', array(
                 $url,
-                $client->email,
-                $client->password 
             ), 'default', $lang);
             $data['header'] = '';
             

@@ -26,18 +26,16 @@ return array(
     ,'invalid_characters_instance_name' => 'Hay algunos caracteres inválidos en el nombre de la instancia'
     ,'freemium_account_created' => "Útimo paso. Por favor revise su correo, le hemos enviado un link para ativar su cuenta."
     ,'freemium_account_created_pending_approval' => "Gracias por suscribirse, en unos minutos va a recibir un correo para empezar a disfrutar de nuestra plataforma LMS Freemium."
-    ,'account_created_subject' => 'Su cuenta de usuario en Paradiso LMS fue verificada y creada'
-    ,'account_created_body' => 'Su cuenta de usuario en Paradiso LMS fue verificada y creada, <a href="%s">haga click aquí</a> para ir a su cuenta.
+    ,'account_created_subject' => 'Su cuenta de usuario en Paradiso LMS fue creada'
+    ,'account_created_body' => 'Su cuenta de usuario en Paradiso LMS fue creada, <a href="%s">haga click aquí</a> para ir a su cuenta.
     <br><b>Login:</b> %s<br>
     <b>Contraseña:</b> %s<br>
     <br> Si tiene alguna pregunta o comentario, puede llamarnos a los teléfonos <br> +57 (4) 412 97 36 <br> +57 301 524 89 81, tambinén nos puede escribir al correo mercadeo@paradisosolutions.com'
     
     //
     ,'confirm_your_email_address_subject' => 'Por favor confirme su dirección de correo.'
-    ,'confirm_your_email_address_body' => 'Por favor haga click en el siguiente enlace para activar su cuenta.<br> <a href="%s">Activar Cuenta</a> 
-    <br><b>Login:</b> %s<br>
-    <b>Contraseña:</b> %s<br>
-    <br> Si tiene alguna pregunta o comentario, puede llamarnos a los teléfonos <br> +57 (4) 412 97 36 <br> +57 301 524 89 81, tambinén nos puede escribir al correo mercadeo@paradisosolutions.com'
+    ,'confirm_your_email_address_body' => 'Por favor haga click en el siguiente enlace para confirmar su email.<br> <a href="%s">Confirmar Email</a> 
+    <br><br> Si tiene alguna pregunta o comentario, puede llamarnos a los teléfonos <br> +57 (4) 412 97 36 <br> +57 301 524 89 81, tambinén nos puede escribir al correo mercadeo@paradisosolutions.com'
     ,'follow_us' => 'Síguenos'
     ,'invalid_verification_code' => 'El código de verificación no es válido.'
     ,'account_already_verified' => "La cuenta de usuario ya está verificada.<br>  <a href='%s' target='_blank'>Haga click aquí</a> para ir a su cuenta."
@@ -50,11 +48,10 @@ return array(
     ,'supported_formats' => 'Solo formatos jpg, png, gif'
     ,'resizing_recommendation_title' => ''
     ,'resizing_recommendation' => 'Aunque haremos lo mejor posible para cambiar el tamaño de su logotipo, le reocmendamos que usted cambie el tamaño de su logotipo antes de transferirlo. <br> Puede utilizar una herramienta en línea como <a href="http://www.resize-photos.com" target="_blank"> http://www.resize-photos.com </a>'
-    
     ,'no_logo_to_rezise' => "No ha seleccionado un logo para que puda ser redimencionado."
     ,'fix_the_below_error' => 'Por favor corrija los errores especificados.'
-    ,'please_wait_lms_creation' => 'Por favor, espere mientras se crea la instancia Paradiso LMS <img src="%s" style="margin-top:7px">'
-    
+    ,'please_wait_lms_creation' => 'Gracias, su cuenta de correo ha sido verificada con éxito.<br>
+    En breve recibirá un correo electrónico con los credenciales de acceso a su cuenta en Paradiso LMS'
     ,'new_accocunt_to_approve' => 'Nueva cuenta de usuario ha sido creada.<br /> <a href="%s">%s</a><br><br>
     <strong>Client\'s info</strong><br>
     Nombre: %s<br>

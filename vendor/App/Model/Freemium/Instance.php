@@ -191,7 +191,7 @@ class Instance extends Com\Model\AbstractModel
             $instance = trim($exploded2[0]);
 
             // check the webpage
-            if('backend' != $params->created_from)
+            if('backend' != $params->created_from && $exploded[1] != 'paradisosolutions.com')
             {
                 $clientPageUrl = $exploded[1];
 
@@ -218,12 +218,16 @@ class Instance extends Com\Model\AbstractModel
                     $bodyMessage = "
                         <strong>A user tried to create an account but was rejected by the scrapper script.</strong><br>
 
-                        Below you will find the user information and the reject reason from the scrapper.<br><br>
+                        Below you will find the reject reason from the scrapper and the user information.<br><br>
 
                         If you believe that the rejected reason criteria is wrong then you can <a href='$serverUrl'>login to the 
                         backend</a> and create the user account by yourself.<br>
-
                         The scraper doesn't run when an account is created from the backend panel.
+
+                        <p>
+                            <strong>REJECT REASON</strong><br>
+                            $reason
+                        </p>
 
                         <p>
                             <strong>USER INFO</strong><br>
@@ -232,11 +236,6 @@ class Instance extends Com\Model\AbstractModel
                             <strong>Email:</strong> {$params->email}<br>
                             <strong>Password:</strong> {$params->password}<br>
                             <strong>Language:</strong> {$params->lang}<br>
-                        </p>
-
-                        <p>
-                            <strong>REJECT REASON</strong><br>
-                            $reason
                         </p>
                     ";
 
@@ -416,13 +415,8 @@ class Instance extends Com\Model\AbstractModel
                 return false;
             }
 
-            $request = $sl->get('request');
-            $uri = $request->getUri();
-            $loadingImage = "{$uri->getScheme()}://{$uri->getHost()}/img/preloader.gif";
 
-            $this->getCommunicator()->setSuccess($this->_('please_wait_lms_creation', array(
-                $loadingImage
-            ), 'default', $client->lang));
+            $this->getCommunicator()->setSuccess($this->_('please_wait_lms_creation', array(), 'default', $client->lang));
         }
         catch(\Exception $e)
         {
@@ -448,7 +442,10 @@ class Instance extends Com\Model\AbstractModel
         
         if(! $vEmail->isValid($params->email))
         {
-            $this->getCommunicator()->addError($this->_('invalid_email_address'), 'email');
+            $e = $this->_('invalid_email_address');
+            $this->getCommunicator()->addError($e, 'email');
+
+            \App\NotifyError::notify("Verify Account Error: $e");
             return false;
         }
         
@@ -470,14 +467,23 @@ class Instance extends Com\Model\AbstractModel
 
             if(! $client)
             {
-                $this->getCommunicator()->addError($this->_('invalid_verification_code'));
+                $e = $this->_('invalid_verification_code');
+                $this->getCommunicator()->addError($e);
+
+                \App\NotifyError::notify("Verify Account Error: $e");
+
                 return false;
             }
             elseif($client->email_verified)
             {
-                $this->getCommunicator()->addError($this->_('account_already_verified', array(
+                $e = $this->_('account_already_verified', array(
                     "http://{$client->domain}/logo.php" 
-                ), 'default', $client->lang));
+                ), 'default', $client->lang);
+
+                $this->getCommunicator()->addError($e);
+
+                \App\NotifyError::notify("Verify Account Error: $e");
+
                 return false;
             }
             else
@@ -485,7 +491,12 @@ class Instance extends Com\Model\AbstractModel
                 $cPassword = new Com\Crypt\Password();
                 if(! $cPassword->validate($client->email, $params->code))
                 {
-                    $this->getCommunicator()->addError($this->_('invalid_verification_code', array(), 'default', $client->lang));
+                    $e = $this->_('invalid_verification_code', array(), 'default', $client->lang);
+
+                    $this->getCommunicator()->addError($e);
+
+                    \App\NotifyError::notify("Verify Account Error: $e");
+
                     return false;
                 }
             }
@@ -494,7 +505,11 @@ class Instance extends Com\Model\AbstractModel
             $databases = $dbDatabase->findDatabaseByClientId($client->id);
             if(!$databases->count())
             {
-                $this->getCommunicator()->addError($this->_('unexpected_error', array(), 'default', $client->lang));
+                $e = $this->_('unexpected_error', array(), 'default', $client->lang);
+                $this->getCommunicator()->addError($e);
+
+                \App\NotifyError::notify("Verify Account Error: $e");
+
                 return false;
             }
 
@@ -660,7 +675,6 @@ class Instance extends Com\Model\AbstractModel
             $this->getCommunicator()->setSuccess($this->_('account_verified', array(
                 "http://{$client->domain}/logo.php" 
             )));
-            
         }
         catch(\Exception $e)
         {
@@ -703,6 +717,8 @@ class Instance extends Com\Model\AbstractModel
             else
             {
                 $this->getCommunicator()->addError($err);
+                \App\NotifyError::notify("Park Domain Error: $err");
+
                 return false;
             }
         }

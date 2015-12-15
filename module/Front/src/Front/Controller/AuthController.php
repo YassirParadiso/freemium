@@ -79,7 +79,14 @@ class AuthController extends Com\Controller\AbstractController
             $uri = $request->getUri();
             $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/auth/create-instance/code/{$params->code}/email/{$params->email}";
 
-            $this->assign('iframe_uri', $serverUrl);
+            $ch = curl_init();
+ 
+            curl_setopt($ch, CURLOPT_URL, $serverUrl);
+            curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+             
+            $content = curl_exec($ch);
+            curl_close($ch);
         }
 
         $this->setCommunicator($com);
@@ -117,9 +124,7 @@ class AuthController extends Com\Controller\AbstractController
             $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/auth/verify-account/code/{$params->code}/email/{$params->email}";
         }
 
-        $this->assign('parent_redirect', $serverUrl);
-
-        return $this->viewVars;
+        exit;
     }
 
 
