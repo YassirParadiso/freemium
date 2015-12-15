@@ -40,7 +40,7 @@ class Client extends Com\DataGrid\AbstractDataGrid
         <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" role="menu">
-        <li><a class="iframe" href="$urlDueDate"><i class="fa fa-calendar-check-o"></i> Set due date</a></li>
+        <li><a class="iframe" href="$urlDueDate"><i class="fa fa-calendar-check-o"></i> Set expiration date</a></li>
         <li role="separator" class="divider"></li>
         <li><a data-users="{$row['count']}" class="delete" href="$urlDelete"><i class="fa fa-trash"></i> Delete</a></li>
     </ul>
@@ -135,7 +135,7 @@ xxx;
         $formatter = new App\DataGrid\Client\Formatter\DueDate();
         
         $col = new ZfcDatagrid\Column\Select('due_date', 'c');
-        $col->setLabel('Due date');
+        $col->setLabel('Expiration date');
         $col->setUserFilterDisabled(true);
         $col->setFormatter($formatter);
         $this->addColumn($col);

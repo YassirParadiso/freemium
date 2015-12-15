@@ -56,15 +56,15 @@ class DueDate extends ZfcDatagrid\Column\Formatter\AbstractFormatter
             }
             elseif(0 == $difference)
             {
-                $label = "DUE TODAY!";
+                $label = "EXPIRES TODAY!";
                 $cssClass = "label-warning";
             }
             else
             {
                 $calcAbs = abs($calc);
-                $label = "past due $calcAbs days ago";
+                $label = "Expired $calcAbs days ago";
                 if(-1 == $calc)
-                    $label = "past due $calcAbs day ago";
+                    $label = "Expired $calcAbs day ago";
 
                 $cssClass = "label-danger";
             }

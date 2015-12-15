@@ -211,12 +211,12 @@ class InstanceController extends Com\Controller\AbstractController
             
             // preparing some replacement values
             $data = array();
-            $data['follow_us'] = $this->_('follow_us');
+            $data['follow_us'] = $this->_('follow_us', array(), 'default', $lang);
             $data['body'] = $this->_('confirm_your_email_address_body', array(
                 $url,
                 $client->email,
                 $client->password 
-            ));
+            ), 'default', $lang);
             $data['header'] = '';
             
             // load the email template and replace values
@@ -234,7 +234,7 @@ class InstanceController extends Com\Controller\AbstractController
             $mailer = new Com\Mailer();
             
             // prepare the message to be send
-            $message = $mailer->prepareMessage($arr['body'], null, $this->_('confirm_your_email_address_subject'));
+            $message = $mailer->prepareMessage($arr['body'], null, $this->_('confirm_your_email_address_subject', array(), 'default', $lang));
             
             $message->setTo($client->email);
             $mailTo = $config['freemium']['mail_to'];

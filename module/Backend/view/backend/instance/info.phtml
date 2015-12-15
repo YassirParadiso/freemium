@@ -60,6 +60,17 @@ $client = $this->client;
                 <?php endif;?>
             </td>
         </tr>
+
+        <tr>
+            <td class="td_label">Instance created by</td>
+            <td>
+                <?php if($client && $client->created_by) : ?>
+                    <?php echo $client->created_by ?>
+                <?php else : ?>
+                    -
+                <?php endif;?>
+            </td>
+        </tr>
         
     </table>
 

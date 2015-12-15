@@ -170,16 +170,14 @@ class Instance extends Com\Model\AbstractModel
 
         try
         {
-
             $validValues = array(
                 'form', 'backend'
             );
 
-            if(array_search($params->created_from, $validValues))
+            if(array_search($params->created_from, $validValues) === false)
             {
                 $m = "Invalid value for created_from property:";
                 $m .= print_r($params->toArray(), 1);
-
                 throw new \Exception($m);
             }
 
@@ -192,6 +190,77 @@ class Instance extends Com\Model\AbstractModel
             $exploded2 = explode('.', $exploded[1]);
             $instance = trim($exploded2[0]);
 
+            // check the webpage
+            if('backend' != $params->created_from)
+            {
+                $clientPageUrl = $exploded[1];
+
+                $scraper = new App\Scraper();
+                $scraper->setUrl($clientPageUrl);
+
+                $dbBlacklistPhrase =  $sl->get('App\Db\BlacklistPhrase');
+                $rowset = $dbBlacklistPhrase->findAll();
+                foreach ($rowset as $row)
+                {
+                    $scraper->addPhrase($row->phrase);
+                }
+                
+                $flag = $scraper->isOk();
+
+                if(!$flag)
+                {
+                    $request = $sl->get('request');
+                    $uri = $request->getUri();
+                    $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/backend";
+
+                    $reason = $scraper->getErrorReason();
+
+                    $bodyMessage = "
+                        <strong>A user tried to create an account but was rejected by the scrapper script.</strong><br>
+
+                        Below you will find the user information and the reject reason from the scrapper.<br><br>
+
+                        If you believe that the rejected reason criteria is wrong then you can <a href='$serverUrl'>login to the 
+                        backend</a> and create the user account by yourself.<br>
+
+                        The scraper doesn't run when an account is created from the backend panel.
+
+                        <p>
+                            <strong>USER INFO</strong><br>
+                            <strong>First name:</strong> {$params->first_name}<br>
+                            <strong>Last name:</strong> {$params->last_name}<br>
+                            <strong>Email:</strong> {$params->email}<br>
+                            <strong>Password:</strong> {$params->password}<br>
+                            <strong>Language:</strong> {$params->lang}<br>
+                        </p>
+
+                        <p>
+                            <strong>REJECT REASON</strong><br>
+                            $reason
+                        </p>
+                    ";
+
+                    $mailer = new Com\Mailer();
+            
+                    // prepare the message to be send
+                    $message = $mailer->prepareMessage($bodyMessage, null, 'User account rejected ');
+                    $mailTo = $config['freemium']['mail_to'];
+                    foreach($mailTo as $mail)
+                    {
+                        $message->addTo($mail);
+                    }
+
+                    // prepare de mail transport and send the message
+                    $transport = $mailer->getTransport($message, 'smtp1', 'notifications');
+                    $transport->send($message);
+
+                    //
+                    $this->getCommunicator()->setSuccess("User account created");
+                    return true;
+                }
+            }
+            
+            
             $lang = $params->lang;
 
             $topDomain = $config['freemium']['top_domain'];
@@ -203,7 +272,7 @@ class Instance extends Com\Model\AbstractModel
             $where['domain = ?'] = $domain;
             while($dbClient->count($where))
             {
-                $str .= mt_rand(1, 9000000);
+                $str = mt_rand(1, 9000000);
                     
                 $domain = "{$instance}{$str}.$lang.$topDomain";
 
@@ -291,6 +360,88 @@ class Instance extends Com\Model\AbstractModel
      *
      * @return boolean
      */
+    function canVerifyAccount(Zend\Stdlib\Parameters $params)
+    {
+        $vEmail = new Zend\Validator\EmailAddress();
+        
+        if(! $vEmail->isValid($params->email))
+        {
+            $this->getCommunicator()->addError($this->_('invalid_email_address'), 'email');
+            return false;
+        }
+        
+        $sl = $this->getServiceLocator();
+
+
+        try
+        {
+            // lets look for the same email in the database
+            $dbClient = $sl->get('App\Db\Client');
+            $dbDatabase = $sl->get('App\Db\Database');
+            
+            $client = $dbClient->findBy(function($where) use($params) {
+                $where->equalTo('email', $params->email);
+                $where->equalTo('deleted', 0);
+                $where->equalTo('approved', 1);
+                
+            })->current();
+
+            if(! $client)
+            {
+                $this->getCommunicator()->addError($this->_('invalid_verification_code'));
+                return false;
+            }
+            elseif($client->email_verified)
+            {
+                $this->getCommunicator()->addError($this->_('account_already_verified', array(
+                    "http://{$client->domain}/logo.php" 
+                ), 'default', $client->lang));
+                return false;
+            }
+            else
+            {
+                $cPassword = new Com\Crypt\Password();
+                if(! $cPassword->validate($client->email, $params->code))
+                {
+                    $this->getCommunicator()->addError($this->_('invalid_verification_code', array(), 'default', $client->lang));
+                    return false;
+                }
+            }
+            
+            //
+            $databases = $dbDatabase->findDatabaseByClientId($client->id);
+            if(!$databases->count())
+            {
+                $this->getCommunicator()->addError($this->_('unexpected_error', array(), 'default', $client->lang));
+                return false;
+            }
+
+            $request = $sl->get('request');
+            $uri = $request->getUri();
+            $loadingImage = "{$uri->getScheme()}://{$uri->getHost()}/img/preloader.gif";
+
+            $this->getCommunicator()->setSuccess($this->_('please_wait_lms_creation', array(
+                $loadingImage
+            ), 'default', $client->lang));
+        }
+        catch(\Exception $e)
+        {
+            $this->setException($e);
+            \App\NotifyError::notify($e);
+        }
+        
+        return $this->isSuccess();
+    }
+
+
+
+    /**
+     *
+     * @param Zend\Stdlib\Parameters $params
+     * @var string email
+     *
+     * @return boolean
+     */
     function verifyAccount(Zend\Stdlib\Parameters $params)
     {
         $vEmail = new Zend\Validator\EmailAddress();
@@ -326,7 +477,7 @@ class Instance extends Com\Model\AbstractModel
             {
                 $this->getCommunicator()->addError($this->_('account_already_verified', array(
                     "http://{$client->domain}/logo.php" 
-                )));
+                ), 'default', $client->lang));
                 return false;
             }
             else
@@ -334,7 +485,7 @@ class Instance extends Com\Model\AbstractModel
                 $cPassword = new Com\Crypt\Password();
                 if(! $cPassword->validate($client->email, $params->code))
                 {
-                    $this->getCommunicator()->addError($this->_('invalid_verification_code'));
+                    $this->getCommunicator()->addError($this->_('invalid_verification_code', array(), 'default', $client->lang));
                     return false;
                 }
             }
@@ -343,7 +494,7 @@ class Instance extends Com\Model\AbstractModel
             $databases = $dbDatabase->findDatabaseByClientId($client->id);
             if(!$databases->count())
             {
-                $this->getCommunicator()->addError($this->_('unexpected_error'));
+                $this->getCommunicator()->addError($this->_('unexpected_error', array(), 'default', $client->lang));
                 return false;
             }
 
@@ -466,6 +617,45 @@ class Instance extends Com\Model\AbstractModel
                   $client->lang
                 ));
             }
+
+
+            // preparing some replacement values
+            $data = array();
+            $data['follow_us'] = $this->_('follow_us');
+            $data['body'] = $this->_('account_created_body', array(
+                "http://{$client->domain}",
+                "{$client->email}",
+                "{$client->password}",
+            ), 'default', $lang);
+            $data['header'] = '';
+            
+            // load the email template and replace values
+            $mTemplate = $sl->get('App\Model\EmailTemplate');
+            
+            $langString = '';
+            if('es' == $lang)
+            {
+                $langString = "_$lang";
+            }
+            
+            $arr = $mTemplate->loadAndParse("common{$langString}", $data);
+            
+            //
+            $mailer = new Com\Mailer();
+            
+            // prepare the message to be send
+            $message = $mailer->prepareMessage($arr['body'], null, $this->_('account_created_subject', array(), 'default', $lang));
+            
+            $message->setTo($client->email);
+            $mailTo = $config['freemium']['mail_to'];
+            foreach($mailTo as $mail)
+            {
+                $message->addBcc($mail);
+            }
+
+            // prepare de mail transport and send the message
+            $transport = $mailer->getTransport($message, 'smtp1', 'sales');
+            $transport->send($message);
             
             $this->getCommunicator()->setSuccess($this->_('account_verified', array(
                 "http://{$client->domain}/logo.php" 

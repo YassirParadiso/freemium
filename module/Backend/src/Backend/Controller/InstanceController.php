@@ -112,7 +112,6 @@ class InstanceController extends Com\Controller\BackendController
             $this->setCommunicator($mInstance->getCommunicator());
             if($flag)
             {
-
                 $flag = $mInstance->doCreateAccount($params);
                 $this->setCommunicator($mInstance->getCommunicator());
                 if($flag)
@@ -379,13 +378,19 @@ class InstanceController extends Com\Controller\BackendController
             $this->_assignCountLoginInfo($client, date('Y-m-d', strtotime($rowClient->created_on)));
             
             //
-            $this->assign('client', $rowClient);
-            
             if($rowClient->approved_by)
             {
                 $row = $dbUser->findByPrimaryKey($rowClient->approved_by);
                 $rowClient->approved_by = "{$row->first_name} {$row->last_name}";
             }
+
+            if($rowClient->created_by)
+            {
+                $row = $dbUser->findByPrimaryKey($rowClient->created_by);
+                $rowClient->created_by = "{$row->first_name} {$row->last_name}";
+            }
+
+            $this->assign('client', $rowClient);
         }
         else
         {

@@ -26,6 +26,11 @@ return array(
     ,'invalid_characters_instance_name' => 'Hay algunos caracteres inválidos en el nombre de la instancia'
     ,'freemium_account_created' => "Útimo paso. Por favor revise su correo, le hemos enviado un link para ativar su cuenta."
     ,'freemium_account_created_pending_approval' => "Gracias por suscribirse, en unos minutos va a recibir un correo para empezar a disfrutar de nuestra plataforma LMS Freemium."
+    ,'account_created_subject' => 'Su cuenta de usuario en Paradiso LMS fue verificada y creada'
+    ,'account_created_body' => 'Su cuenta de usuario en Paradiso LMS fue verificada y creada, <a href="%s">haga click aquí</a> para ir a su cuenta.
+    <br><b>Login:</b> %s<br>
+    <b>Contraseña:</b> %s<br>
+    <br> Si tiene alguna pregunta o comentario, puede llamarnos a los teléfonos <br> +57 (4) 412 97 36 <br> +57 301 524 89 81, tambinén nos puede escribir al correo mercadeo@paradisosolutions.com'
     
     //
     ,'confirm_your_email_address_subject' => 'Por favor confirme su dirección de correo.'
@@ -36,7 +41,7 @@ return array(
     ,'follow_us' => 'Síguenos'
     ,'invalid_verification_code' => 'El código de verificación no es válido.'
     ,'account_already_verified' => "La cuenta de usuario ya está verificada.<br>  <a href='%s' target='_blank'>Haga click aquí</a> para ir a su cuenta."
-    ,'account_verified' => 'Gracias!, Su cuenta de usuario fue verificada, <a href="%s">haga click aquí</a> para ir a su cuenta.'
+    ,'account_verified' => 'Gracias!, Su cuenta de usuario fue verificada y creada, <a href="%s">haga click aquí</a> para ir a su cuenta.'
     ,'please_wait' => 'Por favor espere...'
     ,'edit_instance_name'=> 'Editar el nombre de la instancia'
     ,'not_allowed_to_edit_instance_name' => 'Usted no está autorizado para proporcionar un nombre de instancia'
@@ -48,6 +53,7 @@ return array(
     
     ,'no_logo_to_rezise' => "No ha seleccionado un logo para que puda ser redimencionado."
     ,'fix_the_below_error' => 'Por favor corrija los errores especificados.'
+    ,'please_wait_lms_creation' => 'Por favor, espere mientras se crea la instancia Paradiso LMS <img src="%s" style="margin-top:7px">'
     
     ,'new_accocunt_to_approve' => 'Nueva cuenta de usuario ha sido creada.<br /> <a href="%s">%s</a><br><br>
     <strong>Client\'s info</strong><br>

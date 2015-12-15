@@ -64,17 +64,88 @@ class AuthController extends Com\Controller\AbstractController
 
     function verifyAccountAction()
     {
-        set_time_limit(0);
+        $request = $this->getRequest();
         $params = new Zend\Stdlib\Parameters($this->params()->fromRoute());
+
+        $sl = $this->getServiceLocator();
+        $mInstance = $sl->get('App\Model\Freemium\Instance');
         
+        $flag = $mInstance->canVerifyAccount($params);
+        
+        $com = $mInstance->getCommunicator();
+        if($com->isSuccess())
+        {
+            $request = $sl->get('request');
+            $uri = $request->getUri();
+            $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/auth/create-instance/code/{$params->code}/email/{$params->email}";
+
+            $this->assign('iframe_uri', $serverUrl);
+        }
+
+        $this->setCommunicator($com);
+        
+        return $this->viewVars;
+    }
+
+
+
+    function createInstanceAction()
+    {
+        set_time_limit(0);
+
+        $this->layout('layout/blank');
+
+        $request = $this->getRequest();
+        $params = new Zend\Stdlib\Parameters($this->params()->fromRoute());
+
         $sl = $this->getServiceLocator();
         $mInstance = $sl->get('App\Model\Freemium\Instance');
         
         $flag = $mInstance->verifyAccount($params);
         
         $com = $mInstance->getCommunicator();
-        $this->setCommunicator($com);
+        if($com->isSuccess())
+        {
+            $request = $sl->get('request');
+            $uri = $request->getUri();
+            $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/auth/thanks/code/{$params->code}/email/{$params->email}";
+        }
+        else
+        {
+            $request = $sl->get('request');
+            $uri = $request->getUri();
+            $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/auth/verify-account/code/{$params->code}/email/{$params->email}";
+        }
+
+        $this->assign('parent_redirect', $serverUrl);
+
+        return $this->viewVars;
+    }
+
+
+
+    function thanksAction()
+    {
+        $sl = $this->getServiceLocator();
+        $dbClient = $sl->get('App\Db\Client');
+
+        $request = $this->getRequest();
+        $params = new Zend\Stdlib\Parameters($this->params()->fromRoute());
         
+        $client = $dbClient->findBy(function($where) use($params) {
+            $where->equalTo('email', $params->email);
+            $where->equalTo('deleted', 0);
+            $where->equalTo('approved', 1);
+            
+        })->current();
+
+        if($client)
+        {
+            $this->getCommunicator()->setSuccess($this->_('account_verified', array(
+                "http://{$client->domain}/logo.php" 
+            )));
+        }
+
         return $this->viewVars;
     }
     

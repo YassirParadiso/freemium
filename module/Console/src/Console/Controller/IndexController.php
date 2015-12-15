@@ -114,7 +114,7 @@ class IndexController extends Com\Controller\AbstractController
                 
                 if($existing > $min)
                 {
-                    $msg = "No need to create more databases for $lang version. Currenlty there are $existing databases";
+                    $msg = "No need to create more databases for '$lang' version. Currenlty there are $existing databases";
                     $console->writeLine($msg, 10);
                     continue;
                 }
@@ -151,7 +151,7 @@ class IndexController extends Com\Controller\AbstractController
                         );
                     
                     $dbDatabase->doUpdate($data, function($where) use($databaseId) {
-                        $where->equalTo('id', $databaseId)
+                        $where->equalTo('id', $databaseId);
                     });
 
                     /*************************************/
@@ -165,7 +165,7 @@ class IndexController extends Com\Controller\AbstractController
                     {
                         // delete the database record
                         $dbDatabase->doDelete(function($where) use($databaseId) {
-                            $where->equalTo('id', $databaseId)
+                            $where->equalTo('id', $databaseId);
                         });
 
                         $err = isset($response['error']) ? $response['error'] : $response['event']['error'];
@@ -207,13 +207,13 @@ class IndexController extends Com\Controller\AbstractController
                     /*******************************/
                     // RESTORING database
                     /*******************************/
-                    $console->writeLine("Restoring tables into $newDatabaseNamePrefixed", 11);
+                    $folder = $config['freemium']['path']['master_freemium_schema'][$lang];
                     $username = $config['freemium']['db']['user'];
                     $password = $config['freemium']['db']['password'];
                     $host = $config['freemium']['db']['host'];
                     $dbName = $newDatabaseNamePrefixed;
 
-                    $folder = $config['freemium']['path']['master_freemium_schema'][$lang];
+                    $console->writeLine("Restoring tables from $folder into $newDatabaseNamePrefixed", 11);
                     
                     $adapter = $this->_getAdapter($dbName, $host, $username, $password);
                     
@@ -380,15 +380,15 @@ class IndexController extends Com\Controller\AbstractController
             $c = count($disabled);
             if($c)
             {
-                $msg = "<p>The following instances have expired today and credentials has been changed so the client won't be able to login</p>";
+                $msg = "<p>The following instances expired today and credentials has been changed so the client won't be able to login</p>";
                 $msg .= '<ul>';
 
                 foreach ($disabled as $item)
                 {
                     $msg .= "<li>";
-                    $msg .= "Instance: http://{$item['doamin']}<br>";
+                    $msg .= "Instance: http://{$item['domain']}<br>";
                     $msg .= "Username: {$item['username']}<br>";
-                    $msg .= "Password: {$item['password']}<br>";
+                    $msg .= "Password: trial<br>";
                     $msg .= "</li>";
                 }
 
@@ -397,8 +397,10 @@ class IndexController extends Com\Controller\AbstractController
                 $mailer = new Com\Mailer();
             
                 // prepare the message to be send
-
                 $message = $mailer->prepareMessage($msg, null, "$c Instances Expired!");
+                if(1 == $c)
+                    $message = $mailer->prepareMessage($msg, null, "$c Instance Expired!");
+
                 $mailTo = $config['freemium']['mail_to'];
                 foreach($mailTo as $mail)
                 {
@@ -406,7 +408,7 @@ class IndexController extends Com\Controller\AbstractController
                 }
 
                 // prepare de mail transport and send the message
-                $transport = $mailer->getTransport($message, 'smtp1', 'sales');
+                $transport = $mailer->getTransport($message, 'smtp1', 'notifications');
                 $transport->send($message);
             }
 
@@ -427,6 +429,9 @@ class IndexController extends Com\Controller\AbstractController
     function mdataSyncAction()
     {
         $request = $this->getRequest();
+
+        ini_set('display_errors', 1);
+        error_reporting(E_ALL);
 
         // Make sure that we are running in a console and the user has not tricked our
         // application into running this action from a public web server.
@@ -453,18 +458,25 @@ class IndexController extends Com\Controller\AbstractController
                 $console->writeLine($msg, 11);
             }
 
-            $sources = $config['freemium']['path']['mdata_source'];
-
             $sl = $this->getServiceLocator();
             $config = $sl->get('config');
+            $sources = $config['freemium']['path']['mdata_source'];
+
+            
 
             foreach ($sources as $lang => $sourcePath)
             {
+                $console->writeLine("");
+                $console->writeLine("Executing commands for language: $lang", 11);
+
                 $finalPath = $config['freemium']['path']['master_mdata'][$lang];
                 $tmpPath = '/home/paradisolms/mdata/mdata_tmp';
 
                 // create temp path
+
                 $command = "cp $sourcePath $tmpPath -r";
+                $console->writeLine("$command", 11);
+
                 exec($command);
                 
                 // remove unwanted folders
@@ -479,25 +491,33 @@ class IndexController extends Com\Controller\AbstractController
                 foreach ($toRemove as $pathToRemove)
                 {
                     $command = "rm $pathToRemove -rf";
+                    $console->writeLine("$command", 11);
                     exec($command);
                 }
 
                 // change chmod
                 $command = "chmod 777 $tmpPath/ -R";
+                $console->writeLine("$command", 11);
                 exec($command);
 
                 // rename the existing final path so we can remove latter
                 $command = "mv $finalPath/ {$finalPath}_delete";
+                $console->writeLine("$command", 11);
                 exec($command);
 
                 // rename the tmp path folder to the final path
                 $command = "mv $tmpPath $finalPath";
+                $console->writeLine("$command", 11);
                 exec($command);
 
                 // remove the final renamed folder
                 $command = "rm {$finalPath}_delete/ -rf";
+                $console->writeLine("$command", 11);
                 exec($command);
             }
+
+            $console->writeLine("");
+            $console->writeLine("Done!", 11);
         }
         catch (RuntimeException $e)
         {

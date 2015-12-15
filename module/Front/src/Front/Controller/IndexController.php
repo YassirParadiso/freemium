@@ -8,7 +8,7 @@ class IndexController extends Com\Controller\AbstractController
 
     function homeAction()
     {
-        $request = $this->getRequest();
+       $request = $this->getRequest();
         $sl = $this->getServiceLocator();
 
         $cookie = $request->getCookie();
@@ -30,7 +30,7 @@ class IndexController extends Com\Controller\AbstractController
 
             $params->created_from = 'form';
 
-            $flag = $mInstance->canCreateInstance($params);
+            $flag = 1;#$mInstance->canCreateInstance($params);
             
             $com = $mInstance->getCommunicator();
             $this->assign($params);
