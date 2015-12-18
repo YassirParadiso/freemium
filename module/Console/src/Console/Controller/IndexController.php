@@ -762,14 +762,14 @@ class IndexController extends Com\Controller\AbstractController
             $m .= '</pre>';
             $message = $mailer->prepareMessage($m, null, 'Error grave al intentar crear bases de datos freemium');
             
-            $mailTo = $config['freemium']['mail_to'];
+            $mailTo = $config['freemium']['mail_to_errors'];
             foreach($mailTo as $mail)
             {
                 $message->addTo($mail);
             }
 
             // prepare de mail transport and send the message
-            $transport = $mailer->getTransport($message, 'smtp1', 'sales');
+            $transport = $mailer->getTransport($message, 'smtp1', 'dev');
             $transport->send($message);
         }
         catch(\Exception $e)
