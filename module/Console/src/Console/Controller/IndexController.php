@@ -72,7 +72,7 @@ class IndexController extends Com\Controller\AbstractController
         try
         {
             $console = Console::getInstance();
-            
+
             if($this->_isLocked(__method__))
             {
                 $msg = "Already running...";
@@ -88,6 +88,8 @@ class IndexController extends Com\Controller\AbstractController
             $dbDatabase = $sl->get('App\Db\Database');
 
             $config = $sl->get('config');
+            $dbPrefix = $config['freemium']['db']['prefix'];
+            
             $langs = array(
                 'en','es'
             );
@@ -97,15 +99,8 @@ class IndexController extends Com\Controller\AbstractController
             $console->writeLine($msg, 11);
 
             //
-            $cpanelUser = $config['freemium']['cpanel']['username'];
-            $cpanelPass = $config['freemium']['cpanel']['password'];
-            
-            $dbPrefix = $config['freemium']['db']['prefix'];
-            $dbUser = $config['freemium']['db']['user'];
-            $dbHost = $config['freemium']['db']['host'];
-            $dbPassword = $config['freemium']['db']['password'];
-
-            $cp = $sl->get('cPanelApi');
+            $cPanelUser = $config['freemium']['cpanel']['username'];
+            $cp = $sl->get('cPanelApi2');
 
             foreach ($langs as $lang)
             {
@@ -127,14 +122,16 @@ class IndexController extends Com\Controller\AbstractController
                 $number = 1;
                 for($i=0; $i < $number; $i++)
                 {
+                    $connection = $this->_getDbConnectionParams();
+
                     /*************************************/
                     // add the new database
                     /*************************************/
                     $data = array(
-                        'db_host' => $dbHost
+                        'db_host' => $connection['db_host']
                         ,'db_name' => null
-                        ,'db_user' => $dbUser
-                        ,'db_password' => $dbPassword
+                        ,'db_user' => $connection['db_user']
+                        ,'db_password' => $connection['db_password']
                         ,'lang' => $lang
                     );
                     $dbDatabase->doInsert($data);
@@ -157,19 +154,24 @@ class IndexController extends Com\Controller\AbstractController
                     /*************************************/
                     // create the database
                     /*************************************/
-                    $response = $cp->api2_query($cpanelUser, 'MysqlFE', 'createdb', array(
+                    $queryMF = array(
+                        'module' => 'MysqlFE',
+                        'function' => 'createdb',
+                        'user' => $cPanelUser,
+                    );
+                    $queryArgs = array(
                         'db' => $newDatabaseNamePrefixed,
-                        ));
-
-                    if(isset($response['error']) || isset($response['event']['error']))
+                    );
+                    $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
+                    $aResponse = $response->getResponse('array');
+                    if(isset($aResponse['error']))
                     {
                         // delete the database record
                         $dbDatabase->doDelete(function($where) use($databaseId) {
                             $where->equalTo('id', $databaseId);
                         });
 
-                        $err = isset($response['error']) ? $response['error'] : $response['event']['error'];
-                        throw new \RuntimeException($err);
+                        throw new \Exception($aResponse['error']);
                     }
 
                     $console->writeLine("Database $newDatabaseNamePrefixed created for language $lang", 11);
@@ -186,31 +188,37 @@ class IndexController extends Com\Controller\AbstractController
                     /*******************************/
                     // Assign user to db
                     /*******************************/
-                    $dbUserName = $dbUser;
-                    $response = $cp->api2_query($cpanelUser,
-                        'MysqlFE', 'setdbuserprivileges',
-                        array(
-                            'privileges' => 'ALL_PRIVILEGES',
-                            'db' => $newDatabaseNamePrefixed,
-                            'dbuser' => $dbUserName,
-                            )
-                        );
-                    
-                    if(isset($response['error']) || isset($response['event']['error']))
+                    $queryMF = array(
+                        'module' => 'MysqlFE',
+                        'function' => 'setdbuserprivileges',
+                        'user' => $cPanelUser,
+                    );
+                    $queryArgs = array(
+                        'privileges' => 'ALL_PRIVILEGES',
+                        'db' => $newDatabaseNamePrefixed,
+                        'dbuser' => $connection['db_user'],
+                    );
+                    $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
+                    $aResponse = $response->getResponse('array');
+                    if(isset($aResponse['error']))
                     {
-                        $err = isset($response['error']) ? $response['error'] : $response['event']['error'];
-                        throw new \RuntimeException("Cannot assign privileges to user $dbUserName on database $newDatabaseNamePrefixed . $err");
+                        // delete the database record
+                        $dbDatabase->doDelete(function($where) use($databaseId) {
+                            $where->equalTo('id', $databaseId);
+                        });
+
+                        throw new \Exception("Cannot assign privileges to user {$connection['db_user']} on database $newDatabaseNamePrefixed.<br> {$aResponse['error']}");
                     }
-                    $console->writeLine("Assiged user $dbUserName to database $newDatabaseNamePrefixed", 11);
+                    $console->writeLine("Assiged user {$connection['db_user']} to database $newDatabaseNamePrefixed", 11);
 
 
                     /*******************************/
                     // RESTORING database
                     /*******************************/
                     $folder = $config['freemium']['path']['master_freemium_schema'][$lang];
-                    $username = $config['freemium']['db']['user'];
-                    $password = $config['freemium']['db']['password'];
-                    $host = $config['freemium']['db']['host'];
+                    $username = $connection['db_user'];
+                    $password = $connection['db_password'];
+                    $host = $connection['db_host'];
                     $dbName = $newDatabaseNamePrefixed;
 
                     $console->writeLine("Restoring tables from $folder into $newDatabaseNamePrefixed", 11);
@@ -777,6 +785,89 @@ class IndexController extends Com\Controller\AbstractController
             echo $e->getMessage();
             echo PHP_EOL;
             echo $e->getTraceAsString();
+        }
+    }
+
+
+    /**
+    * 
+    */
+    function _getDbConnectionParams()
+    {
+        $dbPerUser = 1;
+
+        $sl = $this->getServiceLocator();
+        $dbDatabase = $sl->get('App\Db\Database');
+
+        $sql = $dbDatabase->getSql();
+        $select = $sql->select();
+
+        $select->columns(array(
+            '*'
+            ,'c' => new Zend\Db\Sql\Literal('COUNT(*)')
+        ));
+
+        $select->group('db_user');
+        $select->having("c < $dbPerUser");
+        $select->order('c DESC');
+        $select->limit(1);
+
+        $row = $dbDatabase->executeCustomSelect($select)->current();
+        if($row)
+        {
+            return array(
+                'db_host' => $row->db_host
+                ,'db_user' => $row->db_user
+                ,'db_password' => $row->db_password
+            );
+        }
+        else
+        {
+            $config = $sl->get('config');
+            $cPanelUser = $config['freemium']['cpanel']['username'];
+
+            $letters = 'abcefghijklmnopqrstuvwxyz1234567890';
+            $dbPassword = substr(str_shuffle($letters . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 15);
+            $dbHost = $config['freemium']['db']['host'];
+            $dbPrefix = $config['freemium']['db']['prefix'];
+
+            // generate a unique user
+            do
+            {
+                $rand = substr(str_shuffle($letters), 0, 6);
+                $dbUser = "{$dbPrefix}{$rand}";
+
+                $count = $dbDatabase->count(function($where) use($dbUser){
+                    $where->equalTo('db_user', $dbUser);
+                });
+            }
+            while($count > 0);
+
+            $cp = $sl->get('cPanelApi2');
+
+            $queryMF = array(
+                'module' => 'MysqlFE',
+                'function' => 'createdbuser',
+                'user' => $cPanelUser,
+            );
+
+            $queryArgs = array(
+                'dbuser' => $dbUser,
+                'password' => $dbPassword
+            );
+
+            $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
+            $aResponse = $response->getResponse('array');
+            if(isset($aResponse['error']))
+            {
+                throw new \Exception($aResponse['error']);
+            }
+
+            return array(
+                'db_host' => $dbHost
+                ,'db_user' => $dbUser
+                ,'db_password' => $dbPassword
+            );
         }
     }
 
