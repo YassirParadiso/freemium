@@ -56,17 +56,16 @@ return array(
                     ),
                 ),
 
-                
-                /*'remove-accounts' => array(
+                'remove-deleted' => array(
                     'options' => array(
-                        'route' => 'remove-accounts',
+                        'route' => 'remove-deleted',
                         'defaults' => array(
                             '__NAMESPACE__' => 'Console\Controller',
                             'controller' => 'Index',
-                            'action' => 'remove-accounts'
+                            'action' => 'remove-deleted'
                         ),
                     ),
-                ),*/
+                ),
             )
         )
     ),

@@ -111,8 +111,8 @@ class Instance extends Com\Model\AbstractModel
                 
                 // check if the user can provide a custom instance name
                 // Have in mind that paradiso people can provide instance names
-                $topDomain = $config['freemium']['top_domain'];
-                $domain = "$instance.$lang.$topDomain";
+                $topDomain = $config['freemium']['top_domain'][$lang]['root_domain'];
+                $domain = "$instance.$topDomain";
                 
                 // check if the domain name is good
                 if(! $this->_isValidDomainName($domain))
@@ -139,7 +139,7 @@ class Instance extends Com\Model\AbstractModel
                     \App\NotifyError::notify($message);
 
                     $this->_createDatabasesScript();
-                    return false;
+                    return true;
                 }
             }
             catch(\Exception $e)
@@ -262,8 +262,8 @@ class Instance extends Com\Model\AbstractModel
             
             $lang = $params->lang;
 
-            $topDomain = $config['freemium']['top_domain'];
-            $domain = "{$instance}.$lang.$topDomain";
+            $topDomain = $config['freemium']['top_domain'][$lang]['root_domain'];
+            $domain = "{$instance}.$topDomain";
 
 
             // make sure the instance is unique
@@ -273,7 +273,7 @@ class Instance extends Com\Model\AbstractModel
             {
                 $str = mt_rand(1, 9000000);
                     
-                $domain = "{$instance}{$str}.$lang.$topDomain";
+                $domain = "{$instance}{$str}.$topDomain";
 
                 $where = array();
                 $where['domain = ?'] = $domain;
@@ -315,30 +315,35 @@ class Instance extends Com\Model\AbstractModel
 
             // assign database
             $db = $dbDatabase->findFreeDatabase($lang);
-            $data = array(
-                'client_id' => $clientId
-                ,'database_id' => $db->id
-            );
+            if($db)
+            {
+                $data = array(
+                    'client_id' => $clientId
+                    ,'database_id' => $db->id
+                );
 
-            $dbClientDatabase->doInsert($data);
+                $dbClientDatabase->doInsert($data);
+
+
+                //
+                $request = $sl->get('request');
+                $uri = $request->getUri();
+                $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/services/instance/sync-database-and-notify/domain/$domain";
+
+                // make a call to the method that will create the tables and notify the user
+                $ch = curl_init();
+     
+                curl_setopt($ch, CURLOPT_URL, $serverUrl);
+                #curl_setopt($ch, CURLOPT_USERPWD, "client:Laure1es");
+                curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+                 
+                $content = curl_exec($ch);
+                curl_close($ch);
+
+                #echo $content;
+            }
             
-            //
-            $request = $sl->get('request');
-            $uri = $request->getUri();
-            $serverUrl = "{$uri->getScheme()}://{$uri->getHost()}/services/instance/sync-database-and-notify/domain/$domain";
-
-            // make a call to the method that will create the tables and notify the user
-            $ch = curl_init();
- 
-            curl_setopt($ch, CURLOPT_URL, $serverUrl);
-            #curl_setopt($ch, CURLOPT_USERPWD, "client:Laure1es");
-            curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-             
-            $content = curl_exec($ch);
-            curl_close($ch);
-
-            #echo $content;
             $this->getCommunicator()->setSuccess("User account created");
         }
         catch(\Exception $e)
@@ -453,7 +458,6 @@ class Instance extends Com\Model\AbstractModel
         
         try
         {
-            
             // lets look for the same email in the database
             $dbClient = $sl->get('App\Db\Client');
             $dbDatabase = $sl->get('App\Db\Database');
@@ -513,14 +517,14 @@ class Instance extends Com\Model\AbstractModel
                 return false;
             }
 
+            $lang = $client->lang;
+
             // park domain
-            $flag = $this->_parkDomain($client->domain);
+            $flag = $this->_createDomain($client);
             if(!$flag)
             {
                 return false;
             }
-
-            $lang = $client->lang;
 
             $config = $sl->get('config');
             $mDataMasterPath = $config['freemium']['path']['master_mdata'][$lang];
@@ -692,37 +696,54 @@ class Instance extends Com\Model\AbstractModel
 
 
     /**
-    * This method will park the given domain if is not already set as client.instance_ready = 1
+    * This method will create an entry in the dns server
     * @return bool
     */
-    protected function _parkDomain($domain)
+    protected function _createDomain($client)
     {
         $sl = $this->getServiceLocator();
         $dbClient = $sl->get('App\Db\Client');
 
-        $cp = $sl->get('cPanelApi');
+        $config = $sl->get('config');
 
-        $cpUser = $cp->get_user();
-        $result = $cp->park($cpUser, $domain, null);
-        
-        $apiResponse = new App\Cpanel\ApiResponse($result);
-        
-        if($apiResponse->isError())
+        $cPanelUser = $config['freemium']['cpanel']['username'];
+        $domain = $client->domain;
+        $lang = $client->lang;
+        $topDomain = $config['freemium']['top_domain'][$lang]['root_domain'];
+        $dir = $config['freemium']['top_domain'][$lang]['dir'];
+
+        $exploded = explode('.', $domain);
+        $subDomain = current($exploded);
+
+        $cp = $sl->get('cPanelApi2');
+
+        //
+        $queryMF = array(
+            'module' => 'SubDomain',
+            'function' => 'addsubdomain',
+            'user' => $cPanelUser,
+        );
+        $queryArgs = array(
+            'domain' => $subDomain,
+            'rootdomain' => $topDomain,
+            'dir' => $dir,
+        );
+
+        $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
+        $aResponse = $response->getResponse('array');
+        if(isset($aResponse['error']))
         {
-            $err = $apiResponse->getError();
-            if(stripos($err, 'already exists') !== false)
-            {
-                return true;
-            }
-            else
-            {
-                $this->getCommunicator()->addError($err);
-                \App\NotifyError::notify("Park Domain Error: $err");
-
-                return false;
-            }
+            $this->getCommunicator()->addError($aResponse['error']);
+            \App\NotifyError::notify("Error Creating domain $domain: $err");
+            return false;
         }
 
+        //
+        $client->is_subdomain = 1;
+        $dbClient->doUpdate($client->toArray(), function($where) use($client) {
+            $where->equalTo('id', $client->id);
+        });
+        
         return true;
     }
 

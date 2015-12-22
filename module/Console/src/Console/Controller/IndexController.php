@@ -89,7 +89,7 @@ class IndexController extends Com\Controller\AbstractController
 
             $config = $sl->get('config');
             $dbPrefix = $config['freemium']['db']['prefix'];
-            
+
             $langs = array(
                 'en','es'
             );
@@ -177,15 +177,6 @@ class IndexController extends Com\Controller\AbstractController
                     $console->writeLine("Database $newDatabaseNamePrefixed created for language $lang", 11);
                     
                     /*******************************/
-                    // update database schema
-                    /*******************************/
-                    #$adapter = $sl->get('adapter');
-                    #$sql = "ALTER SCHEMA `$newDatabaseNamePrefixed`  DEFAULT CHARACTER SET utf8  DEFAULT COLLATE utf8_general_ci \n";
-                    #$statement = $adapter->query($sql, 'execute');
-                    #$console->writeLine("Schema updated on database $newDatabaseNamePrefixed", 11);
-
-
-                    /*******************************/
                     // Assign user to db
                     /*******************************/
                     $queryMF = array(
@@ -210,6 +201,20 @@ class IndexController extends Com\Controller\AbstractController
                         throw new \Exception("Cannot assign privileges to user {$connection['db_user']} on database $newDatabaseNamePrefixed.<br> {$aResponse['error']}");
                     }
                     $console->writeLine("Assiged user {$connection['db_user']} to database $newDatabaseNamePrefixed", 11);
+
+
+                    /*******************************/
+                    // update database schema
+                    /*******************************/
+                    $username = $connection['db_user'];
+                    $password = $connection['db_password'];
+                    $host = $connection['db_host'];
+                    $dbName = $newDatabaseNamePrefixed;                    
+                    $adapter = $this->_getAdapter($dbName, $host, $username, $password);
+                    
+                    $sql = "ALTER SCHEMA `$newDatabaseNamePrefixed`  DEFAULT CHARACTER SET utf8  DEFAULT COLLATE utf8_general_ci";
+                    $statement = $adapter->query($sql, 'execute');
+                    $console->writeLine("Schema updated on database $newDatabaseNamePrefixed", 11);
 
 
                     /*******************************/
@@ -355,7 +360,7 @@ class IndexController extends Com\Controller\AbstractController
                         $adapter3 = $this->_getInstanceAdapter($host, $username, $password, $database);
 
                         // change the admin user credentials
-                        // set the same values we have in the maste rinstance
+                        // set the same values we have in the master instance
                         if($masterUser)
                         {
                             $msg = "Update admin user credentials for instance {$row->domain}." . PHP_EOL;
@@ -537,17 +542,13 @@ class IndexController extends Com\Controller\AbstractController
     }
 
 
-    protected function _getAdminUserFromMasterInstance($adapter)
-    {
-        $query = "SELECT * FROM mdl_user WHERE id = 2";
-        $rowset = $adapter->query($query)->execute();
-        return $rowset->current();
-    }
 
-
-    private function _____removeAccountsAction_____()
+    function removeDeletedAction()
     {
         $request = $this->getRequest();
+
+        ini_set('display_errors', 1);
+        error_reporting(E_ALL);
 
         // Make sure that we are running in a console and the user has not tricked our
         // application into running this action from a public web server.
@@ -555,133 +556,186 @@ class IndexController extends Com\Controller\AbstractController
         {
             throw new \RuntimeException('You can only use this action from a console!');
         }
-        
+
         try
         {
-            $sl = $this->getServiceLocator();
-            
-            $config = $sl->get('config');
-            
             $console = Console::getInstance();
-            
-            $dbClient = $sl->get('App\Db\Client');
-            $dbDatabase = $sl->get('App\Db\Database');
-            $dbClientDatabase = $sl->get('App\Db\Client\HasDatabase');
-            
-            $topDomain = $config['freemium']['top_domain'];
-            $mDataPath = $config['freemium']['path']['mdata'];
-            $configPath = $config['freemium']['path']['config'];
-            
-            $cpanelUser = $config['freemium']['cpanel']['username'];
-            $cpanelPass = $config['freemium']['cpanel']['password'];
-            
-            $dbPrefix = $config['freemium']['db']['prefix'];
-            $dbUser = $config['freemium']['db']['user'];
-            $dbHost = $config['freemium']['db']['host'];
-            $dbPassword = $config['freemium']['db']['password'];
 
-            //
-            $msg = "-----------------------------------";
-            $console->writeLine($msg, 11);
-            
-            
-            // lets look for deleted records older than 30 days
-            $date = date('Y-m-d', strtotime("-30 days"));
-
-            $predicate = new Zend\Db\Sql\Predicate\Predicate();
-            $predicate->lessThanOrEqualTo('deleted_on', "$date 23:59:59");
-            $predicate->equalTo('deleted', 1);
-
-            $rowset = $dbClient->findby($predicate);
-            $count = $rowset->count();
-
-            if(0 == $count)
+            if($this->_isLocked(__method__))
             {
-                $msg = "No records found to delete.";
+                $msg = "Already running...";
                 $console->writeLine($msg, 10);
                 exit;
             }
+            
+            $this->_lock(__method__);
+            
+            $msg = "Started at ".date('Y-m-d H:i:s') . PHP_EOL;
+            $console->writeLine($msg, 11);
+            
 
-            // 
-            $cp = $sl->get('cPanelApi');
-            foreach($rowset as $row)
+            $sl = $this->getServiceLocator();
+            $config = $sl->get('config');
+
+            $cp = $sl->get('cPanelApi2');
+            $cPanelUser = $config['freemium']['cpanel']['username'];
+
+            $mDataPath = $config['freemium']['path']['mdata'];
+            $configPath = $config['freemium']['path']['config'];
+
+            $adapter = $sl->get('adapter');
+
+            $dbClient = $sl->get('App\Db\Client');
+            $dbDatabase = $sl->get('App\Db\Database');
+            $dbClientDatabase = $sl->get('App\Db\Client\HasDatabase');
+
+            //
+            $sql = new Zend\Db\Sql\Sql($adapter);
+            $select = $sql->select();
+
+            $select->columns(array(
+                'client_id' => new Zend\Db\Sql\Literal('c.id'),
+                'domain' => new Zend\Db\Sql\Literal('c.domain'),
+                'db_name' => new Zend\Db\Sql\Literal('d.db_name'),
+                'db_id' => new Zend\Db\Sql\Literal('d.id'),
+            ));
+
+            $select->from(array('c' => $dbClient->getTable()));
+            $select->join(array('chd' => $dbClientDatabase->getTable()), 'chd.client_id = c.id', array(), 'left');
+            $select->join(array('d' => $dbDatabase->getTable()), 'd.id = chd.database_id', array(), 'left');
+
+            $select->where(function($where) {
+                $where->equalTo('deleted', 1);
+            });
+
+            $rowset = $dbClient->executeCustomSelect($select);
+
+            $msg = "{$rowset->count()} records found";
+            $console->writeLine($msg, 11);
+
+            
+            $console->writeLine("", 11);
+            $msg = "Removing mdata and config file";
+            $console->writeLine($msg, 11);
+            foreach ($rowset as $row)
             {
-                $clientId = $row->id;
+                $domain = $row->domain;
+                $clientId = $row->client_id;
+                $dbName = $row->db_name;
+                $dbId = $row->db_id;
 
-                // when a client is "deleted", the script add to the domain random characters
-                // so here we are going to remove those random characteres
-                $latestDot = strrchr($row->domain, '.');
-                $domain = str_replace($latestDot, '', $row->domain);
+                $exploded = explode('.', $domain);
+                array_pop($exploded);
+                $domain = implode('.', $exploded);
 
-                /*************************************/
-                // delete the domain
-                /*************************************/
-                #$response = $cp->unpark($cpanelUser, $domain);
+                $instanceConfig = "$configPath/{$domain}.php.deleted";
+                $instanceMdata = "$mDataPath/{$domain}.deleted";
 
-                #if(isset($response['error']) || isset($response['event']['error']))
+                //
+                $msg = "Removing $instanceMdata";
+                $console->write($msg, 11);
+                if(file_exists($instanceMdata))
                 {
-                    #$err = isset($response['error']) ? $response['error'] : $response['event']['error'];
-                    #throw new \RuntimeException($err);
+                    exec("rm -Rf {$instanceMdata}/");
+                    $msg = " - Done";
+                    $console->write($msg, 11);
+                }
+                else
+                {
+                    $msg = " - Not found";
+                    $console->write($msg, 10);
                 }
 
-                /*************************************/
-                // delete mdata folder
-                /*************************************/
-                $command = "rm {$mDataPath}/{$domain}.deleted/ -Rf";
-                exec($command);
+                //
+                $console->writeLine("", 11);
+                $msg = "Removing $instanceConfig";
+                $console->write($msg, 11);
 
-                /*************************************/
-                // delete config file
-                /*************************************/
-                $command = "rm {$configPath}/{$domain}.php.deleted";
-                exec($command);
-
-                
-                /*************************************/
-                // delete related databases from cpanel
-                /*************************************/
-                $rowset2 = $dbDatabase->findDatabaseByClientId($clientId);
-                foreach ($rowset2 as $row2)
+                if(file_exists($instanceConfig))
                 {
-                    $dbName = $row2->db_name;
+                    exec("rm {$instanceConfig}");
+                    $msg = " - Done";
+                    $console->write($msg, 11);
+                }
+                else
+                {
+                    $msg = " - Not found";
+                    $console->write($msg, 10);
+                }
 
-                    $response = $cp->api2_query($cpanelUser, 'MysqlFE', 'deletedb', array(
+                //
+                $console->writeLine("", 11);
+                $msg = "Removing database $dbName";
+                $console->write($msg, 11);
+
+                if($dbName)
+                {
+                    $queryMF = array(
+                        'module' => 'MysqlFE',
+                        'function' => 'deletedb',
+                        'user' => $cPanelUser,
+                    );
+
+                    $queryArgs = array(
                         'db' => $dbName,
-                        ));
+                    );
 
-                    if(isset($response['error']) || isset($response['event']['error']))
+                    $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
+                    $aResponse = $response->getResponse('array');
+                    if(!isset($aResponse['error']))
                     {
-                        $err = isset($response['error']) ? $response['error'] : $response['event']['error'];
-                        throw new \RuntimeException($err);
+                        $msg = " - Done";
+                        $console->write($msg, 11);
+                    }
+                    else
+                    {
+                        $msg = " - {$aResponse['error']}";
+                        $console->write($msg, 10);
                     }
                 }
-
-
-
-                /*************************************/
-                // delete database from database database ;-)
-                /*************************************/
-                $where = array();
-                $where['client_id = ?'] = $clientId;
-                $rowset2 = $dbClientDatabase->findBy($where);
-                foreach($rowset2 as $row2)
+                else
                 {
-                    $where = array();
-                    $where['id = ?'] = $row2->database_id;
-                    $dbDatabase->doDelete($where);
+                    $msg = " - No database assigned";
+                    $console->write($msg, 10);
                 }
+                
+                //
+                $dbClient->doDelete(function($where) use($clientId) {
+                    $where->equalTo('id', $clientId);
+                });
 
-                $where = array();
-                $where['client_id = ?'] = $clientId;
-                $dbClientDatabase->doDelete($where);
+                $dbDatabase->doDelete(function($where) use($dbId) {
+                    $where->equalTo('id', $dbId);
+                });
+
+                $dbClientDatabase->doDelete(function($where) use($dbId) {
+                    $where->equalTo('database_id', $dbId);
+                });
+
+                //
+                $console->writeLine("", 11);
+                $console->writeLine("", 11);
             }
         }
         catch (RuntimeException $e)
         {
-            ;
+            $this->_notifyError($e);
+            $this->_unlock(__method__);
         }
+
+
+        $this->_unlock(__method__);
+        $msg = "\nEnded at ".date('Y-m-d H:i:s')."";
+        $console->writeLine($msg, 11);
     }
 
+
+    protected function _getAdminUserFromMasterInstance($adapter)
+    {
+        $query = "SELECT * FROM mdl_user WHERE id = 2";
+        $rowset = $adapter->query($query)->execute();
+        return $rowset->current();
+    }
 
     
     protected function _isLocked($methodName)
@@ -794,10 +848,11 @@ class IndexController extends Com\Controller\AbstractController
     */
     function _getDbConnectionParams()
     {
-        $dbPerUser = 1;
-
         $sl = $this->getServiceLocator();
+        $config = $sl->get('config');
         $dbDatabase = $sl->get('App\Db\Database');
+
+        $dbPerUser = $config['freemium']['db_per_users'];
 
         $sql = $dbDatabase->getSql();
         $select = $sql->select();
@@ -823,7 +878,7 @@ class IndexController extends Com\Controller\AbstractController
         }
         else
         {
-            $config = $sl->get('config');
+            
             $cPanelUser = $config['freemium']['cpanel']['username'];
 
             $letters = 'abcefghijklmnopqrstuvwxyz1234567890';

@@ -150,88 +150,9 @@ class InstanceController extends Com\Controller\BackendController
             $dbClient = $sl->get('App\Db\Client');
             
             $request = $this->getRequest();
-            $id = $this->_params('id', '');
-            
-            if($request->isPost() || ($request->isGet() && $id))
-            {
-                if($request->isPost())
-                {
-                    $ids = (array)$request->getPost('item');
-                }
-                else
-                {
-                    $ids = array($id);
-                }
-
-                $predicateSet = new Zend\Db\Sql\Predicate\PredicateSet();
-                $predicateSet->addPredicate(new Zend\Db\Sql\Predicate\In('id', $ids));
-                $predicateSet->addPredicate(new Zend\Db\Sql\Predicate\Operator('deleted', '=', 0));
-                $predicateSet->addPredicate(new Zend\Db\Sql\Predicate\Operator('approved', '=', 0));
-
-                try
-                {
-                    
-                    $rowset = $dbClient->findBy($predicateSet);
-                    $toDelete = array();
-                    
-                    foreach($rowset as $row)
-                    {
-                        $toDelete[] = $row;
-                        
-                        // find if there are another accounts with the same domain
-                        $predicateSet = new Zend\Db\Sql\Predicate\PredicateSet();
-                        $predicateSet->addPredicate(new Zend\Db\Sql\Predicate\Operator('deleted', '=', 0));
-                        $predicateSet->addPredicate(new Zend\Db\Sql\Predicate\Operator('domain', '=', $row->domain));
-                        $predicateSet->addPredicate(new Zend\Db\Sql\Predicate\Operator('approved', '=', 0));
-                        $predicateSet->addPredicate(new Zend\Db\Sql\Predicate\Operator('id', '!=', $row->id));
-                        $rowset2 = $dbClient->findBy($predicateSet);
-                        
-                        if($rowset2->count())
-                        {
-                            foreach($rowset2 as $row2)
-                            {
-                                $toDelete[] = $row2;
-                            }
-                        }
-                    }
-                    
-                    $count = 0;
-                    foreach($toDelete as $row)
-                    {
-                        //
-                        $where = array();
-                        $where['id = ?'] = $row->id;
-                        
-                        $data = array(
-                            'email' => "{$row->email}.{$row->id}"
-                            ,'domain' => "{$row->domain}.{$row->id}"
-                            ,'deleted' => 1
-                            ,'deleted_on' => date('Y-m-d H:i:s')
-                        );
-                        
-                        $dbClient->doUpdate($data, $where);
-                        $count++;
-                    }
-                
-                    $com = $this->getCommunicator()->setSuccess("$count rows deleted");
-                
-                    $this->saveCommunicator($com);
-            
-                    return $this->redirect()->toRoute('backend/wildcard', array(
-                        'controller' => 'instance'
-                        ,'action' => 'approval-pending'
-                    ));
-                }
-                catch(\Exception $e)
-                {
-                    $errorMessage = $e->getMessage();
-                    return $this->_redirectToListWithMessage($errorMessage, true, 'approval-pending');
-                }
-            }
-            
             $domain = $this->_params('domain', '');
-            
-            $cp = $sl->get('cPanelApi');
+
+            $cp = $sl->get('cPanelApi2');
             $config = $sl->get('config');
             
             $dbDatabase = $sl->get('App\Db\Database');
@@ -240,14 +161,8 @@ class InstanceController extends Com\Controller\BackendController
             $mDataPath = $config['freemium']['path']['mdata'];
             $configPath = $config['freemium']['path']['config'];
             
-            $cpanelUser = $config['freemium']['cpanel']['username'];
-            $cpanelPass = $config['freemium']['cpanel']['password'];
+            $cPanelUser = $config['freemium']['cpanel']['username'];
             
-            $dbPrefix = $config['freemium']['db']['prefix'];
-            $dbUser = $config['freemium']['db']['user'];
-            $dbHost = $config['freemium']['db']['host'];
-            $dbPassword = $config['freemium']['db']['password'];
-
             //
             $rowsetClient = $dbClient->findByDomain($domain);
             $countClient = $rowsetClient->count();
@@ -257,50 +172,73 @@ class InstanceController extends Com\Controller\BackendController
                 $errorMessage = "$countClient records found with the domain name $domain.";
                 return $this->_redirectToListWithMessage($errorMessage, true);
             }
-            
+
+            $isSubDomain = null;
             foreach($rowsetClient as $rowClient)
             {
                 $clientId = $rowClient->id;
-                
-                //
-                $rowsetDatabase = $dbDatabase->findDatabaseByClientId($clientId);
-                $countDatabases = $rowsetDatabase->count();
-                if($countDatabases > 1)
+                if(is_null($isSubDomain))
                 {
-                    $errorMessage = "Ups, $count databases found related to the domain name $domain, please have a look first.";
-                    return $this->_redirectToListWithMessage($errorMessage, true);
-                }
-                elseif(1 == $countDatabases)
-                {
-                    $rowDatabase = $rowsetDatabase->current();
-                    $dbName = $rowDatabase->db_name;
-                    $dbNameNoPrefix = str_replace($dbPrefix, '', $dbName);
+                    $isSubDomain = $clientId->is_subdomain;
                 }
                 
                 // update client email and domain 
                 $where = array();
-                $where['id = ?'] = $rowClient->id;
+                $where['id = ?'] = $clientId;
                 
                 $uid = uniqid();
                 $data = array(
                     'email' => "{$rowClient->email}.$uid"
                     ,'domain' => "{$rowClient->domain}.$uid"
                     ,'deleted' => 1
+                    ,'deleted_on' => date('Y-m-d H:i:s')
                 );
+
                 $dbClient->doUpdate($data, $where);
             }
+
+
             
             /*************************************/
-            // unpark the domain
+            // remove domain
             /*************************************/
-            $response = $cp->unpark($cpanelUser, $domain);
-                
-            if(isset($response['error']) || isset($response['event']['error']))
+            if($domain !is_null($isSubDomain))
             {
-                $errorMessage = isset($response['error']) ? $response['error'] : $response['event']['error'];
-                return $this->_redirectToListWithMessage($errorMessage, true);
+                if($isSubDomain)
+                {
+                    $queryMF = array(
+                        'module' => 'SubDomain',
+                        'function' => 'delsubdomain',
+                        'user' => $cPanelUser,
+                    );
+                    $queryArgs = array(
+                        'domain' => $domain,
+                    );
+                }
+                else
+                {
+                    $queryMF = array(
+                        'module' => 'Park',
+                        'function' => 'unpark',
+                        'user' => $cPanelUser,
+                    );
+                    $queryArgs = array(
+                        'domain' => $domain,
+                    );
+                }
+
+                $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
+                $aResponse = $response->getResponse('array');
+
+                if(isset($aResponse['error']))
+                {
+                    $errorMessage = $aResponse['error'];
+
+                    \App\NotifyError::notify("Error on remove domain {$domain}. Mdata folder {$mDataPath}/$domain/ was not ranamed: $errorMessage");
+                    return $this->_redirectToListWithMessage($errorMessage, true);
+                }
             }
-            
+
             
             /*************************************/
             // rename mdata folder
