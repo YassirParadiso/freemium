@@ -165,7 +165,7 @@ class InstanceController extends Com\Controller\AbstractController
                 $databaseName = $database->db_name;
                 $host = $database->db_host;
                 $username = $database->db_user;
-                $password =  = $database->db_password;
+                $password = $database->db_password;
                 $instanceAdapter = $this->_getInstanceAdapter($databaseName, $host, $username, $password);
 
                 $sql = 'show tables';
