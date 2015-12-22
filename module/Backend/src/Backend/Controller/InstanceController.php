@@ -179,7 +179,7 @@ class InstanceController extends Com\Controller\BackendController
                 $clientId = $rowClient->id;
                 if(is_null($isSubDomain))
                 {
-                    $isSubDomain = $clientId->is_subdomain;
+                    $isSubDomain = $rowClient->is_subdomain;
                 }
                 
                 // update client email and domain 
