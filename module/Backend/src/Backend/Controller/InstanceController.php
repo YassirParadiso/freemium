@@ -202,7 +202,7 @@ class InstanceController extends Com\Controller\BackendController
             /*************************************/
             // remove domain
             /*************************************/
-            if($domain !is_null($isSubDomain))
+            if($domain && !is_null($isSubDomain))
             {
                 if($isSubDomain)
                 {
