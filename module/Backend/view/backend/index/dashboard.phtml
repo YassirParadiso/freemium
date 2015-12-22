@@ -2,21 +2,21 @@
 $com = $this->Communicator();
 $userId = $this->GlobalVars('identity.id', 0);
 ?>
-
 <div class="row">
     <div class="col-lg-4">
         <ul>
-            <li><a href="<?php echo $this->url('backend', array('controller' => 'sql', 'action' => 'index')); ?>">SQL</a></li>
+            <li><i class="fa fa-cogs"></i> <a href="<?php echo $this->url('backend', array('controller' => 'sql', 'action' => 'index')); ?>">SQL</a></li>
             <!--li><a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'approval-pending')); ?>">Approval pending</a></li-->
-            <li><a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'list')); ?>">Instances</a></li>
-            <li><a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'add-instance')); ?>">Add Instance</a></li>
-            <li><a href="<?php echo $this->url('backend', array('controller' => 'BlacklistDomain', 'action' => 'list')); ?>">Blacklist Domain</a></li>
-            <li><a href="<?php echo $this->url('backend', array('controller' => 'blacklist-phrase', 'action' => 'list')); ?>">Blacklist Phrase</a></li>
+            <li><i class="fa fa-list"></i> <a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'list')); ?>">Instances</a></li>
+            <li><i class="fa fa-plus"></i> <a href="<?php echo $this->url('backend', array('controller' => 'instance', 'action' => 'add-instance')); ?>">Add Instance</a></li>
+            <li><i class="fa fa-check-square-o"></i> <a href="<?php echo $this->url('backend', array('controller' => 'BlacklistDomain', 'action' => 'list')); ?>">Blacklist Domain</a></li>
+            <li><i class="fa fa-check-square-o"></i> <a href="<?php echo $this->url('backend', array('controller' => 'blacklist-phrase', 'action' => 'list')); ?>">Blacklist Phrase</a></li>
             <li>
+                <i class="fa fa-download"></i>
                 <select class="dump_instance">
                     <option value="">Dump database</option>
-                    <option value="en">trial.paradisolms.com</option>
-                    <option value="es">master.es.paradisolms.net</option>
+                    <option value="en">en -> trial.paradisolms.com</option>
+                    <option value="es">es -> master.es.paradisolms.net</option>
                 </select>
             </li>
         </ul>
