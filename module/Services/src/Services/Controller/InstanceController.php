@@ -163,7 +163,10 @@ class InstanceController extends Com\Controller\AbstractController
                 $instanceTables = array();
                 
                 $databaseName = $database->db_name;
-                $instanceAdapter = $this->_getInstanceAdapter($databaseName);
+                $host = $database->db_host;
+                $username = $database->db_user;
+                $password =  = $database->db_password;
+                $instanceAdapter = $this->_getInstanceAdapter($databaseName, $host, $username, $password);
 
                 $sql = 'show tables';
                 $rowset = $instanceAdapter->query($sql)->execute();
