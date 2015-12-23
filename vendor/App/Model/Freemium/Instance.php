@@ -112,7 +112,15 @@ class Instance extends Com\Model\AbstractModel
                 // check if the user can provide a custom instance name
                 // Have in mind that paradiso people can provide instance names
                 $topDomain = $config['freemium']['top_domain'][$lang]['root_domain'];
-                $domain = "$instance.$topDomain";
+                if('es' == $lang)
+                {
+                    $domain = "$instance-es.$topDomain";
+                }
+                else
+                {
+                    $domain = "$instance.$topDomain";
+                }
+                    
                 
                 // check if the domain name is good
                 if(! $this->_isValidDomainName($domain))
@@ -263,8 +271,14 @@ class Instance extends Com\Model\AbstractModel
             $lang = $params->lang;
 
             $topDomain = $config['freemium']['top_domain'][$lang]['root_domain'];
-            $domain = "{$instance}.$topDomain";
-
+            if('es' == $lang)
+            {
+                $domain = "$instance-es.$topDomain";
+            }
+            else
+            {
+                $domain = "$instance.$topDomain";
+            }
 
             // make sure the instance is unique
             $where = array();
@@ -272,7 +286,12 @@ class Instance extends Com\Model\AbstractModel
             while($dbClient->count($where))
             {
                 $str = mt_rand(1, 9000000);
-                    
+
+                if('es' == $lang)
+                {
+                    $str .= '-es';
+                }
+
                 $domain = "{$instance}{$str}.$topDomain";
 
                 $where = array();
