@@ -164,14 +164,14 @@ class IndexController extends Com\Controller\AbstractController
                     );
                     $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
                     $aResponse = $response->getResponse('array');
-                    if(isset($aResponse['error']))
+                    if(isset($aResponse['cpanelresult']['error']))
                     {
                         // delete the database record
                         $dbDatabase->doDelete(function($where) use($databaseId) {
                             $where->equalTo('id', $databaseId);
                         });
 
-                        throw new \Exception($aResponse['error']);
+                        throw new \Exception($aResponse['cpanelresult']['error']);
                     }
 
                     $console->writeLine("Database $newDatabaseNamePrefixed created for language $lang", 11);
@@ -191,14 +191,14 @@ class IndexController extends Com\Controller\AbstractController
                     );
                     $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
                     $aResponse = $response->getResponse('array');
-                    if(isset($aResponse['error']))
+                    if(isset($aResponse['cpanelresult']['error']))
                     {
                         // delete the database record
                         $dbDatabase->doDelete(function($where) use($databaseId) {
                             $where->equalTo('id', $databaseId);
                         });
 
-                        throw new \Exception("Cannot assign privileges to user {$connection['db_user']} on database $newDatabaseNamePrefixed.<br> {$aResponse['error']}");
+                        throw new \Exception("Cannot assign privileges to user {$connection['db_user']} on database $newDatabaseNamePrefixed.<br> {$aResponse['cpanelresult']['error']}");
                     }
                     $console->writeLine("Assiged user {$connection['db_user']} to database $newDatabaseNamePrefixed", 11);
 
@@ -682,14 +682,14 @@ class IndexController extends Com\Controller\AbstractController
 
                     $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
                     $aResponse = $response->getResponse('array');
-                    if(!isset($aResponse['error']))
+                    if(!isset($aResponse['cpanelresult']['error']))
                     {
                         $msg = " - Done";
                         $console->write($msg, 11);
                     }
                     else
                     {
-                        $msg = " - {$aResponse['error']}";
+                        $msg = " - {$aResponse['cpanelresult']['error']}";
                         $console->write($msg, 10);
                     }
                 }
@@ -913,9 +913,9 @@ class IndexController extends Com\Controller\AbstractController
 
             $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
             $aResponse = $response->getResponse('array');
-            if(isset($aResponse['error']))
+            if(isset($aResponse['cpanelresult']['error']))
             {
-                throw new \Exception($aResponse['error']);
+                throw new \Exception($aResponse['cpanelresult']['error']);
             }
 
             return array(

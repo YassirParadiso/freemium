@@ -230,12 +230,10 @@ class InstanceController extends Com\Controller\BackendController
                 $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
                 $aResponse = $response->getResponse('array');
 
-                if(isset($aResponse['error']))
+                if(isset($aResponse['cpanelresult']['error']))
                 {
-                    $errorMessage = $aResponse['error'];
-
-                    \App\NotifyError::notify("Error on remove domain {$domain}. Mdata folder {$mDataPath}/$domain/ was not ranamed: $errorMessage");
-                    return $this->_redirectToListWithMessage($errorMessage, true);
+                    $errorMessage = $aResponse['cpanelresult']['error'];
+                    \App\NotifyError::notify("Error on remove domain {$domain} from backend: $errorMessage");
                 }
             }
 
@@ -254,7 +252,7 @@ class InstanceController extends Com\Controller\BackendController
             #exec("rm $configFilename");
             exec("mv $configFilename $configFilename.deleted");
             
-            $message = "Domain $domain successfull removed.";
+            $message = "Domain $domain successfully removed.";
             return $this->_redirectToListWithMessage($message, false);
         }
         catch (\Exception $e)

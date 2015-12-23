@@ -750,10 +750,10 @@ class Instance extends Com\Model\AbstractModel
 
         $response = $cp->cpanel_api2_request('cpanel', $queryMF, $queryArgs);
         $aResponse = $response->getResponse('array');
-        if(isset($aResponse['error']))
+        if(isset($aResponse['cpanelresult']['error']))
         {
-            $this->getCommunicator()->addError($aResponse['error']);
-            \App\NotifyError::notify("Error Creating domain $domain: $err");
+            $this->getCommunicator()->addError($aResponse['cpanelresult']['error']);
+            \App\NotifyError::notify("Error Creating domain $domain: {$aResponse['cpanelresult']['error']}");
             return false;
         }
 
