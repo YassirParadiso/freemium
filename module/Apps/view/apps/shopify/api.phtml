@@ -20,6 +20,9 @@ $formAction = $this->url('apps', $formParams) . "?$query";
 <div id="form">
     <div id="container">
         <form method="post" action="<?php echo $formAction ?>">
+            <p class="alert alert-info">
+                Don't have an account? <br>Click the following button to create your Freemium LMS <a class="btn btn-primary" target="_blank" href="https://freemium.paradisolms.net/">Create an Account</a>
+            </p>
         
             <div id="alert"><?php $com->printMessage() ?></div>
             

@@ -15,11 +15,7 @@ class ShopifyController extends Com\Controller\AbstractController
         
         $sl = $this->getServiceLocator();
         $log = $sl->get('Zend\Log\Logger');
-        
-        $log->debug(print_r(array(
-            'dasdaAAS' 
-        ), 1));
-        
+       
         // check if the user wants to install the application
         if($this->_isInstall())
         {
