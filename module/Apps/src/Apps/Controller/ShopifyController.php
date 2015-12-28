@@ -349,7 +349,7 @@ class ShopifyController extends Com\Controller\AbstractController
         $instance = $row->lms_instance;
         $token = $row->lms_token;
         
-        $lmsLink = $this->_getSsoLink($instance, $token);
+        #$lmsLink = $this->_getSsoLink($instance, $token);
         
         # 'lms_instance'
         # 'lms_token'
