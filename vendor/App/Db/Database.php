@@ -123,6 +123,50 @@ class Database extends Com\Db\AbstractDb
         //
         return $this->executeCustomSelect($select);
     }
+
+
+    function findDatabaseByDomain($domain)
+    {
+        $sl = $this->getServiceLocator();
+       
+        $dbDatabase = $this;
+        $dbClientHasDb = $sl->get('App\Db\Client\HasDatabase');
+        $dbClient = $sl->get('App\Db\Client');
+
+        //
+        $select = new Zend\Db\Sql\Select();
+
+        $select->columns(
+            array(
+                'db_host' => 'd.db_host',
+                'db_name' => 'd.db_name',
+                'db_user' => 'd.db_user',
+                'db_password' => 'd.db_password',
+            )
+            , false
+        );
+
+        // tabla 
+        $select->from(array(
+            'c' => $dbClient->getTable()
+        ));
+
+        // join 
+        $select->join(array('chd' => $dbClientHasDb->getTable()), 'chd.client_id = c.id', array());
+
+        // join 
+        $select->join(array('d' => $dbDatabase->getTable()), 'd.id = chd.database_id', array());
+
+        //
+        $select->where(function($where) use($domain){
+            $where->equalTo('c.domain', $domain);
+        });
+
+        $this->debugSql($select);
+
+        //
+        return $this->executeCustomSelect($select);
+    }
     
     
     function findAllWithClientInfo()
