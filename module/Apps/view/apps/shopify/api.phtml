@@ -28,7 +28,9 @@ $formAction = $this->url('apps', $formParams) . "?$query";
             
             <div class="form-control-2 required large <?php $com->printErrorClass('instance'); ?>">
                 <label><?php echo $this->translate('Instance url')?>*</label>
+
                 <input type="text" name="instance" value="<?php echo $this->escapehtml($this->instance)?>" required="required" placeholder="http://instacename.paradisolms.com"/>
+                <span style="margin-left:35px;font-size:12px">Url of your LMS instance e.g. <strong>http://demo73.paradisolms.net</strong></span>
                 <?php $com->printFieldErrors('instance'); ?>
             </div>
             
