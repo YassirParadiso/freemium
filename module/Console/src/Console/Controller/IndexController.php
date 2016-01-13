@@ -337,6 +337,13 @@ class IndexController extends Com\Controller\AbstractController
 
                 $msg = "{$rowset->count()} recods found" . PHP_EOL;
                 $console->writeLine($msg, 11);
+
+                
+                require_once 'vendor/3rdParty/moodle/moodlelib.php';
+                require_once 'vendor/3rdParty/moodle/password.php';
+                $year = date('Y');
+                $adminPassword = hash_internal_user_password("trial-$year");
+
                 foreach($rowset as $row)
                 {
                     // get related databases
@@ -370,13 +377,13 @@ class IndexController extends Com\Controller\AbstractController
                             $adapter3->query($query2)->execute(array(
                                 $masterUser['username']
                                 ,$masterUser['email']
-                                ,$masterUser['password']
+                                ,$adminPassword
                             ));
 
                             $disabled[] = array(
                                 'domain' => $row->domain
                                 ,'username' => $masterUser['email']
-                                ,'password' => $masterUser['password']
+                                ,'password' => $adminPassword
                             );
                         }
 
@@ -401,7 +408,7 @@ class IndexController extends Com\Controller\AbstractController
                     $msg .= "<li>";
                     $msg .= "Instance: http://{$item['domain']}<br>";
                     $msg .= "Username: {$item['username']}<br>";
-                    $msg .= "Password: trial<br>";
+                    $msg .= "Password: $adminPassword<br>";
                     $msg .= "</li>";
                 }
 
