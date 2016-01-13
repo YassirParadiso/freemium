@@ -51,6 +51,8 @@ class BuildController extends Com\Controller\BackendController
 
     function checkoutAction()
     {
+        set_time_limit(0);
+
         $sl = $this->getServiceLocator();
         $config = $sl->get('config');
 
@@ -61,8 +63,8 @@ class BuildController extends Com\Controller\BackendController
         $build = $params->fromPost('build');
         $instance = $params->fromPost('instance');
 
-        $database = $params->fromPost('database');
-        $mdata = $params->fromPost('mdata');
+        $updateDatabase = $params->fromPost('database');
+        $updateMdata = $params->fromPost('mdata');
 
         if(!$build)
         {
@@ -109,14 +111,111 @@ class BuildController extends Com\Controller\BackendController
         $schemaSource = $config['freemium']['instances'][$instance]['db_schema_source']($config);
         $dataSource = $config['freemium']['instances'][$instance]['db_data_source']($config);
 
-        // we need to empty the database
-        $dbDatabase = $sl->get('App\Db\Database');
-        $rowset = $dbDatabase->findDatabaseByDomain($instance);
+        //
+        if($updateDatabase)
+        {
+            // we need to empty the database
+            $dbDatabase = $sl->get('App\Db\Database');
+            $rowset = $dbDatabase->findDatabaseByDomain($instance);
 
-        echo $rowset->count();
+            $row = $rowset->current();
+            if(!$row)
+            {
+                $this->getCommunicator()->addError("Unable to find database configuration for the instance $instance", 'instance');
+                $this->saveCommunicator($this->getCommunicator());
+                return $this->_redirect();
+            }
 
+            $instanceAdapter = new Zend\Db\Adapter\Adapter(array(
+                'driver' => 'mysqli',
+                'database' => $row->db_name,
+                'username' => $row->db_user,
+                'password' => $row->db_password,
+                'hostname' => $row->db_host,
+                'profiler' => true,
+                'charset' => 'UTF8',
+                'options' => array(
+                    'buffer_results' => true 
+                ) 
+            ));
 
-        exit;
+            # delete all tables
+            $sql = "SHOW TABLES";
+            $rowset = $instanceAdapter->query($sql)->execute();
+            $instanceTables = array();
+            foreach ($rowset as $row2)
+            {
+                $tabelName = current($row2);
+
+                $sql = "DROP TABLE `$tabelName`";
+                $instanceAdapter->query($sql)->execute();
+            }
+
+            # get the list of tables from the path and create
+            $currentTables = array();
+            foreach(glob("$schemaSource/*.sql") as $item)
+            {
+                $sql = file_get_contents($item);
+                $instanceAdapter->query($sql)->execute();
+            }
+
+            # here we have to connect using standard mysqli library, Zend adapter doesn't support yet LOAD DATA command
+            $cnn = mysqli_connect($row->db_host, $row->db_user, $row->db_password, $row->db_name);
+            foreach(glob("$dataSource/*.sql") as $item)
+            {
+                if(0 == filesize($item))
+                {
+                    continue;
+                }
+
+                $info = pathinfo($item);
+                $tableName = str_replace('.sql', '', $info['basename']);
+
+                $sql = "LOAD DATA LOCAL INFILE '$item' INTO TABLE `$tableName`";
+                mysqli_query($cnn, $sql);
+            }
+        }
+        
+
+        if($updateMdata)
+        {
+            # delete mdata files first
+            $output = array();
+            $retVal = -1;
+            exec("rm $mdataPath/* -rf 2>&1", $output, $retVal);
+
+            # copy mdata files
+            $output = array();
+            $retVal = -1;
+            exec("cp $mdataSource/* -R $mdataPath/ 2>&1", $output, $retVal);
+
+            # chmod mdata
+            $output = array();
+            $retVal = -1;
+            exec("chmod 777 $mdataPath/ -R 2>&1", $output, $retVal);
+
+            // remove unwanted folders
+            $toRemove = array(
+                "$mdataPath/cache/",
+                "$mdataPath/localcache/",
+                "$mdataPath/sessions/",
+                "$mdataPath/temp/",
+                "$mdataPath/trashdir/",
+            );
+
+            foreach ($toRemove as $pathToRemove)
+            {
+                $command = "rm $pathToRemove -rf";
+                exec($command);
+            }
+        }
+
+        // checkout to the tag
+        exec("git checkout $build 2>&1", $output, $retVal);
+
+        //
+        $this->getCommunicator()->setSuccess("Done. <strong>$instance</strong> instance is using <strong>$build</strong>", '');
+        $this->saveCommunicator($this->getCommunicator());
         return $this->_redirect();
     }
 
@@ -124,6 +223,8 @@ class BuildController extends Com\Controller\BackendController
 
     function generateAction()
     {
+        set_time_limit(0);
+
         $request = $this->getRequest();
 
         $this->chdirRepo();
@@ -167,16 +268,16 @@ class BuildController extends Com\Controller\BackendController
             'git pull 2>&1',
 
             # merge with dev into build branch
-            'git merge dev 2>&1',
+            ##'git merge dev 2>&1',
 
             # push to remote server
-            'git push -u origin build 2>&1',
+            ##'git push -u origin build 2>&1',
 
             # create the tag
-            "git tag $nextVersion 2>&1",
+            ##"git tag $nextVersion 2>&1",
 
             # send tag to the server
-            'git push --tags 2>&1',
+            ##'git push --tags 2>&1',
         );
 
         foreach ($commands as $command)
@@ -210,10 +311,12 @@ class BuildController extends Com\Controller\BackendController
 
     function getTags()
     {
-        $tags = array();
-        exec('git fetch --prune');
-        exec('git tag', $tags);
+        $output = array();
+        exec('git fetch --prune 2>&1', $output);
 
+        $tags = array();
+        exec('git tag 2>&1', $tags);
+       
         $tags = array_reverse($tags);
 
         return $tags;

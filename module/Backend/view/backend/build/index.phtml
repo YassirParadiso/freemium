@@ -32,7 +32,7 @@ $valueOptions = array(
         </div>
 
         <div class="col-xs-2">
-            <strong><?php echo count($this->builds)?> Builds</strong>
+            <i class="fa fa-cogs"></i> <strong><?php echo count($this->builds)?> Builds</strong>
             <form class="form-horizontal" method="post" action="<?php echo $this->url('backend/wildcard', array('controller' => 'build', 'action' => 'checkout'))?>">
                 <div class="form-group <?php $com->printErrorClass('build'); ?>" style="overflow:auto;height:100px;border:1px solid #eee">
                     <ol>
@@ -40,25 +40,24 @@ $valueOptions = array(
                             <li><label><input type="radio" name="build" value="<?php echo $item?>"> <?php echo $item?></label></li>
                         <?php endforeach;?>
                     </ol>
-                    <!-- git checkout  v2.4.08 -->
                 </div>
                 <?php $com->printFieldErrors('build'); ?>
 
                 <div class="form-group <?php $com->printErrorClass('instance'); ?>">
-                    <label><?php echo $this->translate('Instance')?>*</label>
+                    <label><i class="fa fa-server"></i> <?php echo $this->translate('Instance')?>*</label>
                     <?php echo $this->HtmlSelect('instance', $this->instance_ds, $this->instance, '', array('class' =>  'form-control'))?>
                     <?php $com->printFieldErrors('instance'); ?>
                 </div>
 
                 <div class="form-group <?php $com->printErrorClass('database'); ?>">
                     <input type="checkbox" id="database" name="database" value="1">
-                    <label for="database"><?php echo $this->translate('Update database')?></label>
+                    <label for="database"><i class="fa fa-database"></i> <?php echo $this->translate('Update database')?></label>
                     <?php $com->printFieldErrors('database'); ?>
                 </div>
 
                 <div class="form-group <?php $com->printErrorClass('mdata'); ?>">
                     <input id="mdata" type="checkbox" name="mdata" value="1">
-                    <label for="mdata"><?php echo $this->translate('Update data folder')?></label>
+                    <label for="mdata"><i class="fa fa-folder-open"></i> <?php echo $this->translate('Update mdata folder')?></label>
                     <?php $com->printFieldErrors('mdata'); ?>
                 </div>
 

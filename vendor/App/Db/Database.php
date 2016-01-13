@@ -162,8 +162,6 @@ class Database extends Com\Db\AbstractDb
             $where->equalTo('c.domain', $domain);
         });
 
-        $this->debugSql($select);
-
         //
         return $this->executeCustomSelect($select);
     }

@@ -1,0 +1,39 @@
+<?php
+$this->headTitle('Update user information');
+$com = $this->Communicator();
+
+?>
+<div class="row">          
+    <div class="col-xs-12">
+        <h2><?php echo $this->translate('Update user information')?></h2>
+        <div class="col-xs-4">
+            <form class="form-horizontal" method="post" action="">
+          
+                <div id="alert"><?php $com->printMessage() ?></div>
+
+                <div class="form-group <?php $com->printErrorClass('email'); ?>">
+                    <label><?php echo $this->translate('Email address')?>*</label>
+                    <input type="email" id="email" name="email" value="<?php echo $this->escapeHtml($this->email) ?>" required="required" class="form-control">
+                    <?php $com->printFieldErrors('email'); ?>
+                </div>
+
+                <div class="form-group <?php $com->printErrorClass('first_name'); ?>">
+                    <label><?php echo $this->translate('First name')?>*</label>
+                    <input type="text" id="firstname" name="first_name" value="<?php echo $this->escapeHtml($this->first_name) ?>" required="required" class="form-control">
+                    <?php $com->printFieldErrors('first_name'); ?>
+                </div>
+
+                <div class="form-group <?php $com->printErrorClass('last_name'); ?>">
+                    <label><?php echo $this->translate('Last name')?>*</label>
+                    <input type="text" id="lastname" name="last_name" value="<?php echo $this->escapeHtml($this->last_name) ?>" required="required" class="form-control">
+                    <?php $com->printFieldErrors('last_name'); ?>
+                </div>
+
+                <div class="form-group" id="submit" style="margin-top:10px">
+                    <input type="submit" id="submit" value="<?php echo $this->translate('Save')?>" class="btn btn-primary">
+                </div>
+
+            </form>
+        </div>
+   </div>
+</div>
