@@ -51,14 +51,17 @@ class Scraper
         }
         else
         {
-            foreach($this->phrases as $phrase)
+            if($this->phrases)
             {
-                $found = stripos($content, $phrase);
-                if($found !== false)
+                foreach($this->phrases as $phrase)
                 {
-                    $this->_setErrorReasonDetails("Phrase '$phrase' was found within the page content");
-                    $r = false;
-                    break;
+                    $found = stripos($content, $phrase);
+                    if($found !== false)
+                    {
+                        $this->_setErrorReasonDetails("Phrase '$phrase' was found within the page content");
+                        $r = false;
+                        break;
+                    }
                 }
             }
         }
