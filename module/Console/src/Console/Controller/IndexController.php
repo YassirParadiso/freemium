@@ -342,7 +342,8 @@ class IndexController extends Com\Controller\AbstractController
                 require_once 'vendor/3rdParty/moodle/moodlelib.php';
                 require_once 'vendor/3rdParty/moodle/password.php';
                 $year = date('Y');
-                $adminPassword = hash_internal_user_password("trial-$year");
+                $newPass = "trial-$year";
+                $adminPassword = hash_internal_user_password($newPass);
 
                 foreach($rowset as $row)
                 {
@@ -408,7 +409,7 @@ class IndexController extends Com\Controller\AbstractController
                     $msg .= "<li>";
                     $msg .= "Instance: http://{$item['domain']}<br>";
                     $msg .= "Username: {$item['username']}<br>";
-                    $msg .= "Password: $adminPassword<br>";
+                    $msg .= "Password: $newPass<br>";
                     $msg .= "</li>";
                 }
 
