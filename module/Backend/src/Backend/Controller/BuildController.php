@@ -35,6 +35,11 @@ class BuildController extends Com\Controller\BackendController
             if($this->createNewTag($nextVersion) !== true)
                 return;
         }
+
+        $keys = array_keys($config['freemium']['builds_type']);
+        $dsBuildType = array_combine($keys, $keys);
+        
+        $this->assign('build_type_ds', $dsBuildType);
         
         //
         $instance_ds = array(
@@ -251,37 +256,22 @@ class BuildController extends Com\Controller\BackendController
 
     function createNewTag($nextVersion)
     {
-        $commands = array(
-            # first we need to reset the repo 
-            'git reset --hard 2>&1',
+        $sl = $this->getServiceLocator();
+        $config = $sl->get('config');
+        $keys = $config['freemium']['builds_type'];
 
-            # chage to the dev branch
-            'git checkout dev 2>&1',
+        $request = $this->getRequest();
+        $buildType = $request->getPost('build_type', null);
 
-            # get the latest changes in dev branch
-            'git pull 2>&1',
-
-            # go to the build branch 
-            'git checkout build 2>&1',
-
-            # get the latest changes in build branch
-            'git pull 2>&1',
-
-            # merge with dev into build branch
-            ##'git merge dev 2>&1',
-
-            # push to remote server
-            ##'git push -u origin build 2>&1',
-
-            # create the tag
-            ##"git tag $nextVersion 2>&1",
-
-            # send tag to the server
-            ##'git push --tags 2>&1',
-        );
-
+        $commands = $keys[$buildType];
         foreach ($commands as $command)
         {
+            $command = str_replace('{{tag}}', $nextVersion, $command);
+            $command = "$command 2>&1";
+
+            echo "$command <br>";
+            continue;
+
             $output = array();
             $retVal = -1;
 
@@ -295,8 +285,39 @@ class BuildController extends Com\Controller\BackendController
             }
         }
 
+        $commands = array(
+            # first we need to reset the repo 
+            ######3'git reset --hard 2>&1',
+
+            # chage to the dev branch
+            ######3'git checkout dev 2>&1',
+
+            # get the latest changes in dev branch
+            ######3'git pull 2>&1',
+
+            # go to the build branch 
+            ######3'git checkout build 2>&1',
+
+            # get the latest changes in build branch
+            ######3'git pull 2>&1',
+
+            # merge with dev into build branch
+            ######3'git merge dev 2>&1',
+
+            # push to remote server
+            ######3'git push -u origin build 2>&1',
+
+            # create the tag
+            ######3"git tag $nextVersion 2>&1",
+
+            # send tag to the server
+            ######3'git push --tags 2>&1',
+        );
+
         return true;
     }
+
+
 
     function chdirRepo()
     {
@@ -361,6 +382,7 @@ class BuildController extends Com\Controller\BackendController
     {
         $request = $this->getRequest();
         $major = $request->getPost('major', null);
+        $buildType = $request->getPost('build_type', null);
 
         if(empty($major))
         {
@@ -374,6 +396,25 @@ class BuildController extends Com\Controller\BackendController
             if(!preg_match($pattern, $major))
             {
                 $this->getcommunicator()->addError('Please provide a valid version', 'major');
+                $this->saveCommunicator($this->getcommunicator());
+                return $this->_redirect();
+            }
+        }
+
+        if(empty($buildType))
+        {
+            $this->getcommunicator()->addError('Please choose a build type', 'build_type');
+            $this->saveCommunicator($this->getcommunicator());
+            return $this->_redirect();
+        }
+        else
+        {
+            $sl = $this->getServiceLocator();
+            $config = $sl->get('config');
+            $keys = array_keys($config['freemium']['builds_type']);
+            if(!in_array($buildType, $keys))
+            {
+                $this->getcommunicator()->addError('Please choose a build type', 'build_type');
                 $this->saveCommunicator($this->getcommunicator());
                 return $this->_redirect();
             }
