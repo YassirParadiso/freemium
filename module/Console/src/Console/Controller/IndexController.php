@@ -328,6 +328,7 @@ class IndexController extends Com\Controller\AbstractController
                 $select->where(function($where) use($today, $lang){
                     $where->equalTo('due_date', $today);
                     $where->equalTo('deleted', 0);
+                    $where->equalTo('internal', 0);
                     $where->equalTo('lang', $lang);
                 });
 
