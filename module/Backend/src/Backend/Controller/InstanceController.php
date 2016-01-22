@@ -136,7 +136,6 @@ class InstanceController extends Com\Controller\BackendController
     	
     	$mInstance->deleteFreeDatabases();
     	exit;
-    	
     }
     
     
@@ -176,6 +175,12 @@ class InstanceController extends Com\Controller\BackendController
             $isSubDomain = null;
             foreach($rowsetClient as $rowClient)
             {
+                if($rowClient->internal)
+                {
+                    $errorMessage = "<strong>$domain</strong> instance is for internal use, cannot be deleted.";
+                    return $this->_redirectToListWithMessage($errorMessage, true);
+                }
+
                 $clientId = $rowClient->id;
                 if(is_null($isSubDomain))
                 {
