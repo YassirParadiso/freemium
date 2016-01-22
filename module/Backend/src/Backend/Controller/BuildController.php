@@ -110,12 +110,6 @@ class BuildController extends Com\Controller\BackendController
             return $this->_redirect();
         }
 
-        $repoPath = $config['freemium']['instances'][$instance]['repo_path'];
-        $mdataPath = $config['freemium']['instances'][$instance]['mdata_path'];
-        $mdataSource = $config['freemium']['instances'][$instance]['mdata_source']($config);
-        $schemaSource = $config['freemium']['instances'][$instance]['db_schema_source']($config);
-        $dataSource = $config['freemium']['instances'][$instance]['db_data_source']($config);
-
         //
         if($updateDatabase)
         {
@@ -143,7 +137,31 @@ class BuildController extends Com\Controller\BackendController
                     'buffer_results' => true 
                 ) 
             ));
+        }
 
+
+        //
+
+        $repoPath = $config['freemium']['instances'][$instance]['repo_path'];
+        $mdataPath = $config['freemium']['instances'][$instance]['mdata_path'];
+        $mdataSource = $config['freemium']['instances'][$instance]['mdata_source']($config);
+        $schemaSource = $config['freemium']['instances'][$instance]['db_schema_source']($config);
+        $dataSource = $config['freemium']['instances'][$instance]['db_data_source']($config);
+
+        // checkout to the tag
+        $output = array();
+        $retVal = -1;
+        exec("git checkout $build 2>&1", $output, $retVal);
+        if($retVal !== 0)
+        {
+            $msg = implode('<br>', $output);
+            $this->getcommunicator()->addError($msg);
+            $this->saveCommunicator($this->getcommunicator());
+            return $this->_redirect();
+        }
+
+        if($updateDatabase)
+        {
             # delete all tables
             $sql = "SHOW TABLES";
             $rowset = $instanceAdapter->query($sql)->execute();
@@ -180,8 +198,8 @@ class BuildController extends Com\Controller\BackendController
                 mysqli_query($cnn, $sql);
             }
         }
-        
 
+        //
         if($updateMdata)
         {
             # delete mdata files first
@@ -214,9 +232,6 @@ class BuildController extends Com\Controller\BackendController
                 exec($command);
             }
         }
-
-        // checkout to the tag
-        exec("git checkout $build 2>&1", $output, $retVal);
 
         //
         $this->getCommunicator()->setSuccess("Done. <strong>$instance</strong> instance is using <strong>$build</strong>", '');
@@ -268,9 +283,6 @@ class BuildController extends Com\Controller\BackendController
         {
             $command = str_replace('{{tag}}', $nextVersion, $command);
             $command = "$command 2>&1";
-
-            echo "$command <br>";
-            continue;
 
             $output = array();
             $retVal = -1;
